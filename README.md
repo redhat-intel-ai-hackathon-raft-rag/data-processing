@@ -67,6 +67,6 @@ RAG for generating answer
 
 - Include a screenshot showcasing the underlying platform supporting the Intel Xeon Processor AMX feature.
 
-### Legal
+## Legal
 
 Apache-2.0 licensed, refer to the LICENSE file in the top level directory.
