@@ -31,7 +31,7 @@ Intel OpenVINO
 
 Intel Xeon Processor AMX feature
 
-### Deliberables
+### Deliverables
 Include a demonstration video of the Project made publicly visible on YouTube, Vimeo, Facebook Video, or Youku
 
   Video should be around three minutes
