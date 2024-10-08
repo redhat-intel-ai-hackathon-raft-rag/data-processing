@@ -18,6 +18,7 @@ RAG for generating answer
   - requirement.txt
   - spec.txt
   - authors.txt
+  - branches.txt
 2. Dataset(RAFT)
   - raw_dataset
   - raft
