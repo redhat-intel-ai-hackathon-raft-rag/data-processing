@@ -15,10 +15,10 @@ RAG for generating answer
 ## Components
 
 0. Docs
-  requirement.txt
-  spec.txt
-  legal.txt
-  authors.txt
+  - requirement.txt
+  - spec.txt
+  - legal.txt
+  - authors.txt
 2. Dataset(RAFT)
   - raw_dataset
   - raft
@@ -38,31 +38,31 @@ RAG for generating answer
   - efficiency_rag
   - effectiveness_model
 6. Infra
-  deploy_script
+  - deploy_script
 7. Deliverables
-    demo_video
-    test_run_all
-    screen_shot_openvino
-    screen_shot_amx    
+  - demo_video
+  - test_run_all
+  - screen_shot_openvino
+  - screen_shot_amx    
     
 ## Requirement
 ### Environment and technology
 
-Red Hat OpenShift AI environment
+- Red Hat OpenShift AI environment
 
-Intel OpenVINO
+- Intel OpenVINO
 
-Intel Xeon Processor AMX feature
+- Intel Xeon Processor AMX feature
 
 ### Deliverables
-Include a demonstration video of the Project made publicly visible on YouTube, Vimeo, Facebook Video, or Youku
+- Include a demonstration video of the Project made publicly visible on YouTube, Vimeo, Facebook Video, or Youku
 
   Video should be around three minutes
   
   Video should include footage that shows the Project functioning on the device for which it was built
 
-Include at least one test script to demonstrate the Project functionality
+- Include at least one test script to demonstrate the Project functionality
 
-Include a screenshot capturing the results of the test script showcasing the use of the Intel OpenVINO model server for inference.
+- Include a screenshot capturing the results of the test script showcasing the use of the Intel OpenVINO model server for inference.
 
-Include a screenshot showcasing the underlying platform supporting the Intel Xeon Processor AMX feature. 
+- Include a screenshot showcasing the underlying platform supporting the Intel Xeon Processor AMX feature. 
