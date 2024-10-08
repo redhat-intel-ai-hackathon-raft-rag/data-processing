@@ -1,5 +1,5 @@
 # Overview
-Generative AI or RAG (Retrieval Augmented Generation) applications.
+Generative AI and RAG (Retrieval Augmented Generation) applications for https://redhat-intel.devpost.com.
 
 ## Problem
 Solving problem of the specific domain, like knowledge of the organizations or industries, is hard.
@@ -65,4 +65,8 @@ RAG for generating answer
 
 - Include a screenshot capturing the results of the test script showcasing the use of the Intel OpenVINO model server for inference.
 
-- Include a screenshot showcasing the underlying platform supporting the Intel Xeon Processor AMX feature. 
+- Include a screenshot showcasing the underlying platform supporting the Intel Xeon Processor AMX feature.
+
+### Legal
+
+Apache-2.0 licensed, refer to the LICENSE file in the top level directory.
