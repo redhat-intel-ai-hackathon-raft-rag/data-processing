@@ -17,7 +17,6 @@ RAG for generating answer
 0. Docs
   - requirement.txt
   - spec.txt
-  - legal.txt
   - authors.txt
 2. Dataset(RAFT)
   - raw_dataset
