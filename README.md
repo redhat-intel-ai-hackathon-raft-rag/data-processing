@@ -18,7 +18,7 @@ RAG for generating answer
 
 ## Components
 
-0. Docs
+1. Docs
 
 - requirement.txt
 - spec.txt
