@@ -1,34 +1,36 @@
 import random
-from raft.generate_questions_llm import generate_questions_llm
-from raft.generate_answer_llm import generate_answer_llm
+from typing import List
+from dataset.raft.generate_question_answer_set import generate_question_answer_set
+from llmmodel import text_splitter
 
 
-def chunk_to_dataset(data_chunks):
-    ## TODO data store to generate wrong question/answer pairs: documents in the same domain is preferable
-    ## current implementation is generating wrong question/answer pairs from other chunk in the chunks
+def chunks_to_dataset(chunks: List[str]):
+    chunks = text_splitter.create_documents([chunks])
+    num_chunks = len(chunks)
+    idx = 0
     dataset = []
-    index = 0
-    for chunk in data_chunks:
-        questions = generate_questions_llm(chunk, 1)
-        ## TODO pick data chuck other than chunk of current index
-        wrong_chunk = data_chunks[]
-        wrong_questions = generate_questions_llm(wrong_chunk, 1)
-        for question in questions:
+    ## TODO implement the distruction i.e. the rejection of the answer
+    for chunk in chunks:
+        if len(chunk.page_content) > 800:
+            parts = text_splitter.split_text(chunk.page_content)
+            for part in parts:
+                j_array = generate_question_answer_set(part)
+                for j in j_array:
+                    d = {
+                        "instruction": j["question"],
+                        "input": chunk,
+                        "chosen": j["answer"],
+                        "rejected": ""
+                    }
+                    dataset.append(d)
+            continue
+        j_array = generate_question_answer_set(chunk.page_content)
+        for j in j_array:
             d = {
-                "instruction": "",
-                "input": "",
-                "chosen": "",
+                "instruction": j["question"],
+                "input": chunk,
+                "chosen": j["answer"],
                 "rejected": ""
             }
-            d["instruction"] = question  ## i.e. question
-            d["input"] = chunk
-            d["chosen"] = generate_answer_llm(d["instruction"], d["input"])
-            d["rejected"] = generate_answer_llm(wrong_questions[random.randint(0,len(wrong_questions))]), d['input']
+            dataset.append(d)
     return dataset
-
-
-if __name__ == "__main__":
-    print(generate_questions_llm("What is the capital of France?", 1))
-    print(generate_answer_llm("What is the capital of France?", "The capital of France is Paris."))
-    data_chunks = ["What is the capital of France?", "The capital of France is Paris."]
-    print(chunk_to_dataset(data_chunks))
