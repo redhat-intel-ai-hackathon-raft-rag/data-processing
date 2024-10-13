@@ -3,7 +3,7 @@ import json
 import PyPDF2
 
 
-def data_to_chunk(file_path: str, doc_type: DocType,
+def data_to_chunks(file_path: str, doc_type: DocType,
                   chunk_size: int = 512,
                   text_field_name: str = None):
     if doc_type == "pdf":

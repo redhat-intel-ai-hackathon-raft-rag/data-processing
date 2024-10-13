@@ -4,7 +4,7 @@ from dataset.raft.generate_question_answer_set import generate_question_answer_s
 from llmmodel import text_splitter
 
 
-def chunks_to_dataset(chunks: List[str]):
+def chunks_to_dataset(chunks: str) -> List[dict]:
     chunks = text_splitter.create_documents([chunks])
     num_chunks = len(chunks)
     idx = 0
