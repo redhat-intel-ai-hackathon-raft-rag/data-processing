@@ -34,15 +34,21 @@ def generate_question_answer_set(chunk: str):
         for question in questions:
             question = question.replace("Generate questions based on the following text:", "")
             try:
+                ## generate Chain-of-Thought style answer
                 messages = [
                     {
                         "role": "system",
                         "content": """
                         You will be asked to generate an answer.
                         Instructions:
-                        - Provide a concise answer to the question.
-                        - Provide a summary of how you reached your answer.
-                        - Answer should be calm and authoritative.
+                        - Question: Present the question or problem clearly.
+                        - Context/Information: Include any relevant information or context that will aid in reasoning.
+                        - Reasoning Steps: Outline the logical steps taken to arrive at the answer. This might include:
+                            Analyzing the question.
+                            Identifying relevant facts or information from the context.
+                            Performing calculations or comparisons if necessary.
+                            Drawing conclusions based on the analysis.
+                        - Answer: Present the final answer, clearly stated. Answer should be calm and authoritative.
                         """
                     },
                     {
