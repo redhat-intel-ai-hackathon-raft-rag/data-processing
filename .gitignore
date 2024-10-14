@@ -163,3 +163,4 @@ cython_debug/
 health_care_magic_hf_dataset
 iCliniq_data_hf_dataset
 qa_json
+extracted_text.json

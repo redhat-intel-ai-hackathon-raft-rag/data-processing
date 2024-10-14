@@ -19,7 +19,7 @@ class DomainSpider(scrapy.Spider):
         hrefs = response.css('a::attr(href)').getall()
         for href in hrefs:
             full_url = response.urljoin(href)
-            if full_url not in self.visited_urls and full_url.startswith("https://www.healthline.com"):
+            if full_url not in self.visited_urls and full_url.startswith("https://www.healthline.com") or full_url.startswith("https://www.cdc.gov") or full_url.startswith("https://www.who.int") or full_url.startswith("https://www.npr.org") or full_url.startswith("https://www.ama-assn.org"):
                 self.visited_urls.add(full_url)
                 yield scrapy.Request(full_url, callback=self.parse)
         with open("dataset/raw_dataset/scraper/visited_urls.txt", "w") as f:
