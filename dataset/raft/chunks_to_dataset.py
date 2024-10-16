@@ -18,7 +18,7 @@ def chunks_to_dataset(chunks: str, distuctor_only_dataset_ratio=0.2) -> List[dic
                 for j in j_array:
                     d = {
                         "instruction": j["question"],
-                        "input": chunk,
+                        "input": chunk.page_content,
                         "chosen": j["answer"],
                         "rejected": ""
                     }
@@ -42,7 +42,7 @@ def chunks_to_dataset(chunks: str, distuctor_only_dataset_ratio=0.2) -> List[dic
             else:
                 d = {
                     "instruction": j["question"],
-                    "input": chunk,
+                    "input": chunk.page_content,
                     "output": j["answer"]
                 }
             dataset.append(d)

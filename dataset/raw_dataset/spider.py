@@ -14,7 +14,7 @@ class DomainSpider(scrapy.Spider):
         "https://www.healthline.com/",
         "https://www.cdc.gov/",
         "https://www.who.int/",
-        "https://www.npr.org/",
+        "https://www.npr.org/sections/health/",
         "https://www.ama-assn.org/"
     ]
     visited_urls_file = "dataset/raw_dataset/scraper/visited_urls.txt"
@@ -54,8 +54,11 @@ class DomainSpider(scrapy.Spider):
         links = response.css('a::attr(href)').getall()
         link_list = [response.urljoin(link) for link in links]
         if continue_crawl:
-            for tag in main_content.find_all(['header', 'footer']):
-                tag.decompose()
+            try:
+                for tag in main_content.find_all(['header', 'footer']):
+                    tag.decompose()
+            except Exception:
+                pass
             document = document_transformer.handle(str(main_content))
             document = self.clean_document(document)
             data_entry = {

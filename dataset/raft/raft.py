@@ -56,6 +56,7 @@ def raft(args):
             dataset = chunks_to_dataset(item[args.text_field_name])
             if len(dataset) == 0:
                 continue
+            print(dataset)
             with open(f"{args.output_folder}/{i}_raft_{file_name}.json", "w") as f:
                 json.dump(dataset, f, indent=4)
 
