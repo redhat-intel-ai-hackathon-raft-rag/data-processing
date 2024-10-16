@@ -7,6 +7,7 @@ import time
 import threading
 import re
 
+
 class DomainSpider(scrapy.Spider):
     name = "domain_spider"
     start_urls = [
@@ -16,12 +17,10 @@ class DomainSpider(scrapy.Spider):
         "https://www.npr.org/",
         "https://www.ama-assn.org/"
     ]
-    
     visited_urls_file = "dataset/raw_dataset/scraper/visited_urls.txt"
     data_file = "dataset/raw_dataset/scraper/extracted_text.json"
-    interval = 300  # 5 minutes in seconds
-    
-    
+    interval = 60  # 1 minute
+
     def __init__(self, *args, **kwargs):
         super(DomainSpider, self).__init__(*args, **kwargs)
         self.visited_urls = self.load_visited_urls()
@@ -46,27 +45,25 @@ class DomainSpider(scrapy.Spider):
         document_transformer = html2text.HTML2Text()
         document_transformer.ignore_links = True
         document_transformer.ignore_images = True
-        soup = BeautifulSoup(response.text, 'html.parser')
-        main_content = soup.body
-        
-        for tag in main_content.find_all(['header', 'footer']):
-            tag.decompose()
-        
-        # Extract text from main content
-        document = document_transformer.handle(str(main_content))
-        document = self.clean_document(document)
-
+        continue_crawl = True
+        try:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            main_content = soup.body
+        except Exception:
+            continue_crawl = False
         links = response.css('a::attr(href)').getall()
         link_list = [response.urljoin(link) for link in links]
-
-        data_entry = {
-            "url": response.url,
-            "text": document,
-            "links": link_list
-        }
-
-        # Write to file
-        self.write_to_file(data_entry)
+        if continue_crawl:
+            for tag in main_content.find_all(['header', 'footer']):
+                tag.decompose()
+            document = document_transformer.handle(str(main_content))
+            document = self.clean_document(document)
+            data_entry = {
+                "url": response.url,
+                "text": document,
+                "links": link_list
+            }
+            self.write_to_file(data_entry)
 
         # Append the current URL to the visited set and file
         self.visited_urls.add(response.url)
@@ -104,11 +101,15 @@ class DomainSpider(scrapy.Spider):
         return any(url.startswith(prefix) for prefix in self.start_urls)
 
     def close(self):
-        # Write the closing bracket for the last file
-        with open(self.current_file, "a") as f:
-            ## remove last comma
-            f.seek(f.tell() - 2, os.SEEK_SET)
-            f.write("]\n")
+        with open(self.current_file, "r+") as f:
+            f.seek(0, os.SEEK_END)
+            if f.tell() > 0:
+                f.seek(f.tell() - 2, os.SEEK_SET)
+                last_char = f.read(1)
+                if last_char == ",":
+                    f.seek(f.tell() - 1, os.SEEK_SET)
+                    f.truncate()
+            f.write("]")
 
 if __name__ == "__main__":
     from scrapy.crawler import CrawlerProcess

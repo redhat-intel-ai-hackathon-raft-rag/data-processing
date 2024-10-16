@@ -165,3 +165,5 @@ iCliniq_data_hf_dataset
 qa_json
 extracted_text*
 visited_urls.txt
+**visited_urls.txt
+dataset/raw_dataset/scraper/visited_urls.txt
