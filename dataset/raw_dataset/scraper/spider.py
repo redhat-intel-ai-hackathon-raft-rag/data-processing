@@ -66,6 +66,7 @@ class DomainSpider(scrapy.Spider):
             self.write_to_file(data_entry)
 
         # Append the current URL to the visited set and file
+        # self.load_visited_urls()
         self.visited_urls.add(response.url)
         self.save_visited_url(response.url)
 

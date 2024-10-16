@@ -19,5 +19,5 @@ def distructors_generator(chunks: list,
         distructor_index = random.randint(0, num_chunks - 1)
         while distructor_index == current_chunk_index:
             distructor_index = random.randint(0, num_chunks - 1)
-        distructors.append(chunks[distructor_index])
+        distructors.append(chunks[distructor_index].page_content)
     return distructors

@@ -3,7 +3,6 @@ import torch
 from transformers import AutoTokenizer, pipeline, AutoModelForCausalLM
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_huggingface import HuggingFaceEmbeddings
-from dataset.raft.generate_question_answer_set import generate_question_answer_set
 
 LLM_MODEL_NAME = "meta-llama/Llama-3.2-1B-Instruct"
 model = AutoModelForCausalLM.from_pretrained(LLM_MODEL_NAME)
@@ -18,6 +17,7 @@ text_splitter = SemanticChunker(HuggingFaceEmbeddings(model_name="BAAI/bge-m3"))
 
 
 if __name__ == "__main__":
+    from dataset.raft.generate_question_answer_set import generate_question_answer_set
     print(tokenizer("What is the capital of France?", return_tensors="pt"))
     chunks = ""
     with open("sample.txt", "r") as file:

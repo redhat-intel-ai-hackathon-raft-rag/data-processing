@@ -30,15 +30,13 @@ def chunks_to_dataset(chunks: str, distuctor_only_dataset_ratio=0.2) -> List[dic
             if dice > distuctor_only_dataset_ratio and num_chunks > 1:
                 d = {
                     "instruction": j["question"],
-                    "input": chunk + "\n" + distructors_generator(
-                        chunks, idx, num_distructors=3).join("\n"),
+                    "input": "\n".join(str(d) for d in distructors_generator(chunks, idx, num_distructors=3)),
                     "output": j["answer"]
                 }
             elif dice <= distuctor_only_dataset_ratio and num_chunks > 1:
                 d = {
                     "instruction": j["question"],
-                    "input": distructors_generator(
-                        chunks, idx, num_distructors=3).join("\n"),
+                    "input": "\n".join(str(d) for d in distructors_generator(chunks, idx, num_distructors=3)),
                     "output": j["answer"]
                 }
             else:

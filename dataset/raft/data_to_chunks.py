@@ -1,6 +1,13 @@
-from raft.raft import DocType
 import json
 import PyPDF2
+
+
+# enum for document types
+class DocType:
+    PDF = "pdf"
+    JSON = "json"
+    JSON_ARRAY = "json_array"
+    TXT = "txt"
 
 
 def data_to_chunks(file_path: str,

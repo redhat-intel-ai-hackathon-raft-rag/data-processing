@@ -6,7 +6,7 @@ from dataset.raft.chunks_to_dataset import chunks_to_dataset
 from dataset.raft.data_to_chunks import data_to_chunks
 
 
-def raft():
+def raft(args):
     """
     1. Split the Text into Chunks: Divide the entire book or article
        into manageable chunks for easier processing.
@@ -30,22 +30,20 @@ def raft():
                 a:answer from step 3
             }
     """
-    argparser = ArgumentParser()
-    argparser.add_argument("--doc_type", type=str, required=True)
-    argparser.add_argument("--text_field_name", type=str, default=None)
-    argparser.add_argument("--file_path", type=str, required=True)
-    argparser.add_argument("--output_folder", type=str, required=True)
-    args = argparser.parse_args()
-    file_name = args.file_path.split("/")[-1]
+    file_name = args.file_path.split("/")[-1].split(".")[0]
     if args.doc_type not in ["pdf", "json", "json_array", "txt"]:
         raise ValueError("doc_type should be one of pdf, json, txt")
     if args.doc_type in ["json", "json_array"] and args.text_field_name is None:
         raise ValueError("text_field_name is required for json data")
+    if args.doc_type in ["json"]:
+        with open(args.file_path, "r") as f:
+            data = f.read(1)
+            if data.startswith("["):
+                args.doc_type = "json_array"
     if args.doc_type not in ["json_array"]:
         chunks = data_to_chunks(
             args.file_path,
             args.doc_type,
-            args.chunk_size,
             args.text_field_name
         )
         dataset = chunks_to_dataset(chunks)
@@ -54,10 +52,19 @@ def raft():
     if args.doc_type in ["json_array"]:
         with open(args.file_path, "r") as f:
             data = json.load(f)
-        chunks_list = []
-        for item in data:
-            chunks_list.append(item[args.text_field_name])
-        for i, chunk in enumerate(chunks_list):
-            dataset = chunks_to_dataset(chunk)
+        for i, item in enumerate(data):
+            dataset = chunks_to_dataset(item[args.text_field_name])
+            if len(dataset) == 0:
+                continue
             with open(f"{args.output_folder}/{i}_raft_{file_name}.json", "w") as f:
                 json.dump(dataset, f, indent=4)
+
+
+if __name__ == "__main__":
+    argparser = ArgumentParser()
+    argparser.add_argument("--doc_type", type=str, required=True)
+    argparser.add_argument("--text_field_name", type=str, default=None)
+    argparser.add_argument("--file_path", type=str, required=True)
+    argparser.add_argument("--output_folder", type=str, required=True)
+    args = argparser.parse_args()
+    raft(args)
