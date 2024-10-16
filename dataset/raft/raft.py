@@ -34,7 +34,9 @@ def raft():
     argparser.add_argument("--doc_type", type=str, required=True)
     argparser.add_argument("--text_field_name", type=str, default=None)
     argparser.add_argument("--file_path", type=str, required=True)
+    argparser.add_argument("--output_folder", type=str, required=True)
     args = argparser.parse_args()
+    file_name = args.file_path.split("/")[-1]
     if args.doc_type not in ["pdf", "json", "json_array", "txt"]:
         raise ValueError("doc_type should be one of pdf, json, txt")
     if args.doc_type in ["json", "json_array"] and args.text_field_name is None:
@@ -47,8 +49,7 @@ def raft():
             args.text_field_name
         )
         dataset = chunks_to_dataset(chunks)
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        with open(f"{args.file_path}_raft_{timestamp}.json", "w") as f:
+        with open(f"{args.output_folder}/{i}_raft_{file_name}.json", "w") as f:
             json.dump(dataset, f, indent=4)
     if args.doc_type in ["json_array"]:
         with open(args.file_path, "r") as f:
@@ -58,6 +59,5 @@ def raft():
             chunks_list.append(item[args.text_field_name])
         for i, chunk in enumerate(chunks_list):
             dataset = chunks_to_dataset(chunk)
-            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-            with open(f"{args.file_path}_raft_{i}_{timestamp}.json", "w") as f:
+            with open(f"{args.output_folder}/{i}_raft_{file_name}.json", "w") as f:
                 json.dump(dataset, f, indent=4)
