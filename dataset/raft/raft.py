@@ -31,18 +31,33 @@ def raft():
             }
     """
     argparser = ArgumentParser()
-    argparser.add_argument("--file_path", type=str, required=True)
     argparser.add_argument("--doc_type", type=str, required=True)
-    argparser.add_argument("--chunk_size", type=int, default=512)
     argparser.add_argument("--text_field_name", type=str, default=None)
+    argparser.add_argument("--file_path", type=str, required=True)
     args = argparser.parse_args()
-    chunks = data_to_chunks(
-        args.file_path,
-        args.doc_type,
-        args.chunk_size,
-        args.text_field_name
-    )
-    dataset = chunks_to_dataset(chunks)
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    with open(f"dataset/generated_dataset_{timestamp}.json", "w") as file:
-        json.dump(dataset, file)
+    if args.doc_type not in ["pdf", "json", "json_array", "txt"]:
+        raise ValueError("doc_type should be one of pdf, json, txt")
+    if args.doc_type in ["json", "json_array"] and args.text_field_name is None:
+        raise ValueError("text_field_name is required for json data")
+    if args.doc_type not in ["json_array"]:
+        chunks = data_to_chunks(
+            args.file_path,
+            args.doc_type,
+            args.chunk_size,
+            args.text_field_name
+        )
+        dataset = chunks_to_dataset(chunks)
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        with open(f"{args.file_path}_raft_{timestamp}.json", "w") as f:
+            json.dump(dataset, f, indent=4)
+    if args.doc_type in ["json_array"]:
+        with open(args.file_path, "r") as f:
+            data = json.load(f)
+        chunks_list = []
+        for item in data:
+            chunks_list.append(item[args.text_field_name])
+        for i, chunk in enumerate(chunks_list):
+            dataset = chunks_to_dataset(chunk)
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            with open(f"{args.file_path}_raft_{i}_{timestamp}.json", "w") as f:
+                json.dump(dataset, f, indent=4)

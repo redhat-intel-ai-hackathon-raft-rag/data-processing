@@ -3,24 +3,24 @@ import json
 import PyPDF2
 
 
-def data_to_chunks(file_path: str, doc_type: DocType,
-                  chunk_size: int = 512,
-                  text_field_name: str = None):
+def data_to_chunks(file_path: str,
+                   doc_type: DocType,
+                   text_field_name: str = None) -> list:
     if doc_type == "pdf":
-        return _text_to_chunk(
-            _pdf_to_text(file_path), chunk_size)
+        return _pdf_to_chunks(file_path)
     if doc_type == "json":
-        return _text_to_chunk(
-            _json_to_text(file_path, text_field_name), chunk_size)
+        return _json_to_chunks(file_path, text_field_name)
     if doc_type == "txt":
-        return _text_to_chunk(file_path, chunk_size)
+        return _text_to_chunks(file_path)
 
 
-def _text_to_chunk(data, chunk_size):
-    return [data[i:i + chunk_size] for i in range(0, len(data), chunk_size)]
+def _text_to_chunks(file_path):
+    with open(file_path, 'r') as f:
+        text = f.read()
+    return text
 
 
-def _pdf_to_text(file_path=None, chunk_size=512):
+def _pdf_to_chunks(file_path):
     text = ""
     with open(file_path, 'rb') as file:
         reader = PyPDF2.PdfReader(file)
@@ -31,7 +31,7 @@ def _pdf_to_text(file_path=None, chunk_size=512):
     return text
 
 
-def _json_to_text(file_path=None, text_field_name=None, chunk_size=512):
+def _json_to_chunks(file_path, text_field_name=None):
     if text_field_name is None:
         raise "text_field_name is required for json data"
     with open(file_path, 'r') as f:
@@ -39,10 +39,15 @@ def _json_to_text(file_path=None, text_field_name=None, chunk_size=512):
     text = data[text_field_name]
     return text
 
+
 if __name__ == "__main__":
     pdf_path = "United_States_PDF.pdf"
-    text = _pdf_to_text(pdf_path)
-    print(text)
+    text_path = "United_States_TXT.txt"
+    json_path = "United_States_JSON.json"
     chunk_size = 1000
-    chunks = _text_to_chunk(text, chunk_size)
+    chunks = data_to_chunks(pdf_path, DocType.PDF)
+    print(chunks)
+    chunks = data_to_chunks(text_path, DocType.TXT)
+    print(chunks)
+    chunks = data_to_chunks(json_path, DocType.JSON, "text")
     print(chunks)

@@ -34,7 +34,7 @@ def generate_question_answer_set(chunk: str):
         for question in questions:
             question = question.replace("Generate questions based on the following text:", "")
             try:
-                ## generate Chain-of-Thought style answer
+                # generate Chain-of-Thought style answer
                 messages = [
                     {
                         "role": "system",
