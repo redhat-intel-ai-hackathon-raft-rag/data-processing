@@ -1,7 +1,8 @@
 output_folder="dataset/generated_dataset"
 raft_checkpoint_file="dataset/generated_dataset/raft_checkpoint.txt"
+# only base name of the file
 find dataset/generated_dataset -type f -name "*_raft_extracted_text_*.json" | while read -r file; do
-    echo "extracted_text_${file##*_raft_extracted_text_}" >> "$raft_checkpoint_file"
+    echo "extracted_text_${base_name##*_raft_extracted_text_}" >> "$raft_checkpoint_file"
 done
 # remove duplicates
 sort -u -o "$raft_checkpoint_file" "$raft_checkpoint_file"
