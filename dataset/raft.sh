@@ -2,14 +2,19 @@ output_folder="dataset/generated_dataset"
 raft_checkpoint_file="dataset/generated_dataset/raft_checkpoint.txt"
 # only base name of the file
 find dataset/generated_dataset -type f -name "*_raft_extracted_text_*.json" | while read -r file; do
-    echo "extracted_text_${base_name##*_raft_extracted_text_}" >> "$raft_checkpoint_file"
+    base_name=$(basename "$file")
+    # remove {*_} in the beginning and {.json} in the end
+    file_name="${base_name#*_}"
+    echo "${file_name}" >> "$raft_checkpoint_file"
 done
+
 # remove duplicates
 sort -u -o "$raft_checkpoint_file" "$raft_checkpoint_file"
 # Find all files in raw_dataset with specified extensions
 find dataset/raw_dataset -type f \( -name "*.json" -o -name "*.csv" -o -name "*.txt" -o -name "*.pdf" \) | while read -r file; do
     if [ -f "$raft_checkpoint_file" ]; then
-        if grep -q "$file" "$raft_checkpoint_file"; then
+        base_name=$(basename "$file")
+        if grep -q "$base_name" "$raft_checkpoint_file"; then
             continue
         fi
     fi
@@ -34,5 +39,6 @@ find dataset/raw_dataset -type f \( -name "*.json" -o -name "*.csv" -o -name "*.
     fi
 
     # Append the file to the raft_checkpoint_file
-    echo "$file" >> "$raft_checkpoint_file"
+    base_name=$(basename "$file")
+    echo "${base_name}" >> "$raft_checkpoint_file"
 done
