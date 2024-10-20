@@ -168,3 +168,7 @@ visited_urls.txt
 **visited_urls.txt
 dataset/raw_dataset/scraper/visited_urls.txt
 *raft_extracted_text*
+*.pdf
+*.epub
+*.part
+*.7z

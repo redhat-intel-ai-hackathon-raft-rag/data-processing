@@ -4,6 +4,7 @@ from transformers import AutoTokenizer, pipeline, AutoModelForCausalLM
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_huggingface import HuggingFaceEmbeddings
 from sentence_transformers import SentenceTransformer
+from FlagEmbedding import BGEM3FlagModel
 
 LLM_MODEL_NAME = "meta-llama/Llama-3.2-1B-Instruct"
 model = AutoModelForCausalLM.from_pretrained(LLM_MODEL_NAME)
@@ -15,9 +16,10 @@ text_generation_pipeline = pipeline(
         max_length=1024,
         device=0 if torch.cuda.is_available() else -1)
 text_splitter = SemanticChunker(HuggingFaceEmbeddings(model_name="BAAI/bge-m3"))
-topic_model = SentenceTransformer('all-MiniLM-L6-v2')
+# topic_model = SentenceTransformer('all-MiniLM-L6-v2')
+topic_model = SentenceTransformer("BAAI/bge-m3")
 ner_pipeline = pipeline("ner", model="dbmdz/bert-large-cased-finetuned-conll03-english", aggregation_strategy="simple")
-
+bge_model = BGEM3FlagModel('BAAI/bge-m3',  use_fp16=True) 
 
 if __name__ == "__main__":
     from dataset.raft.generate_question_answer_set import generate_question_answer_set
