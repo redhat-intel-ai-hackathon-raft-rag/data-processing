@@ -1,2 +1,4 @@
-raft_extracted_text_20241016_133751.json
-raft_extracted_text_20241016_214416.json
+extracted_text_20241018_013527.json
+extracted_text_20241017_225726.json
+extracted_text_20241018_012927.json
+extracted_text_20241017_210355.json

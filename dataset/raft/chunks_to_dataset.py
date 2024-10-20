@@ -6,7 +6,11 @@ from llmmodel import text_splitter
 
 
 def chunks_to_dataset(chunks: str, distuctor_only_dataset_ratio=0.2) -> List[dict]:
-    chunks = text_splitter.create_documents([chunks])
+    try:
+        chunks = text_splitter.create_documents([chunks])
+    except Exception:
+        print(chunks)
+        raise
     num_chunks = len(chunks)
     idx = 0
     dataset = []

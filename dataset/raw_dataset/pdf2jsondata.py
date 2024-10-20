@@ -4,7 +4,6 @@ import PyPDF2
 import json
 from llmmodel import text_splitter, bge_model
 import nltk
-from nltk.tokenize import sent_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 
