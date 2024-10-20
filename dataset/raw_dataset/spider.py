@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 import os
 import time
 import threading
-import re
+from dataset.raw_dataset.clean_document import clean_document
 
 
 class DomainSpider(scrapy.Spider):
@@ -16,15 +16,31 @@ class DomainSpider(scrapy.Spider):
         "https://www.cdc.gov/",
         "https://www.who.int/",
         "https://www.npr.org/sections/health/",
-        "https://www.ama-assn.org/"
+        "https://www.ama-assn.org/",
+        "https://www.nih.gov/",
+        "https://www.mayoclinic.org/",
+        "https://www.webmd.com/",
+        "https://www.hopkinsmedicine.org/",
+        "https://www.ncbi.nlm.nih.gov/",
+        "https://medlineplus.gov/",
+        "https://jamanetwork.com/",
+        "https://www.nejm.org/",
+        "https://www.healthgrades.com/",
+        "https://www.medicinenet.com/",
+        "https://www.medscape.com/",
+        "https://www.medicalnewstoday.com/",
+        "https://www.drugs.com/",
+        "https://www.everydayhealth.com/"
     ]
     visited_urls_file = "dataset/raw_dataset/scraper/visited_urls.txt"
     data_file = "dataset/raw_dataset/scraper/extracted_text.json"
+    linked_domains_file = "dataset/raw_dataset/scraper/linked_domains.txt"
     interval = 60  # 1 minute
 
     def __init__(self, *args, **kwargs):
         super(DomainSpider, self).__init__(*args, **kwargs)
         self.visited_urls = self.load_visited_urls()
+        self.linked_domains = self.load_linked_domains()
         self.start_time = time.time()
         self.file_lock = threading.Lock()
         self.current_file = self.get_new_file()
@@ -32,6 +48,12 @@ class DomainSpider(scrapy.Spider):
     def load_visited_urls(self):
         if os.path.exists(self.visited_urls_file):
             with open(self.visited_urls_file, "r") as f:
+                return set(f.read().splitlines())
+        return set()
+
+    def load_linked_domains(self):
+        if os.path.exists(self.linked_domains_file):
+            with open(self.linked_domains_file, "r") as f:
                 return set(f.read().splitlines())
         return set()
 
@@ -54,8 +76,22 @@ class DomainSpider(scrapy.Spider):
             continue_crawl = False
         links = response.css('a::attr(href)').getall()
         # remove links which include [facebook, twitter, instagram, linkedin, youtube, pinterest, snapchat, reddit, google, amazon, microsoft, apple, wikipedia]
-        links = [link for link in links if not any(social in link for social in ['facebook', 'twitter', 'instagram', 'linkedin', 'youtube', 'pinterest', 'snapchat', 'reddit', "tiktok"])]
         link_list = [response.urljoin(link) for link in links]
+        filtered_links = []
+        for link in link_list:
+            if not any(social_media in link for social_media in [
+                "facebook", "twitter", "instagram", "linkedin", "youtube",
+                "pinterest", "snapchat", "reddit", "google", "amazon",
+                "microsoft", "apple", "wikipedia", "tiktok", "adobe.com",
+                "onetrust", "zoom", "youtu.be", "trello", "slack", "github",
+                "bit.ly", "tinyurl", "ow.ly", "buff.ly", "dlvr.it", "ift.tt",
+                "feedburner", "feedblitz", "feedproxy", "feedly", "mailchimp",
+                "constantcontact", "aweber", "getresponse", "sendgrid",
+                "sendinblue", "mailgun", "mailerlite", "moosend", "convertkit",
+                "drip", "activecampaign", "hubspot", "salesforce", "zoho", "tel:"
+            ]):
+                filtered_links.append(link)
+        link_list = filtered_links
         if continue_crawl:
             try:
                 for tag in main_content.find_all(['header', 'footer']):
@@ -63,7 +99,7 @@ class DomainSpider(scrapy.Spider):
             except Exception:
                 pass
             document = document_transformer.handle(str(main_content))
-            document = self.clean_document(document)
+            document = clean_document(document)
             parsed_url = urlparse(response.url)
             domain_parts = parsed_url.netloc.split('.')
             if len(domain_parts) >= 2:
@@ -71,12 +107,22 @@ class DomainSpider(scrapy.Spider):
             else:
                 toplevel_domain = parsed_url.netloc
             link_list_without_same_domain = [link for link in link_list if toplevel_domain not in link]
-            if len(document) > 50:
+            if len(document) > 100:
                 data_entry = {
                     "url": response.url,
                     "text": document,
                     "links": link_list_without_same_domain
                 }
+                if link_list_without_same_domain:
+                    for link in link_list_without_same_domain:
+                        domain_parts = urlparse(link).netloc.split('.')
+                        if len(domain_parts) >= 2:
+                            linked_toplevel_domain = '.'.join(domain_parts[-2:])
+                        else:
+                            linked_toplevel_domain = urlparse(link).netloc
+                        if linked_toplevel_domain not in self.linked_domains:
+                            self.linked_domains.add(linked_toplevel_domain)
+                            self.save_linked_domain(linked_toplevel_domain)
             self.write_to_file(data_entry)
 
         # Append the current URL to the visited set and file
@@ -95,37 +141,6 @@ class DomainSpider(scrapy.Spider):
             if full_url not in self.visited_urls and self.is_valid_url(full_url) and not full_url.endswith(('.png', '.jpg', '.svg', '.pdf')):
                 yield scrapy.Request(full_url, callback=self.parse)
 
-    def clean_document(self, document):
-        # Clean the document text
-        document = re.sub(r'^[^\n]*\b[^\s]*\.(?:png|jpg|svg)\b[^\n]{0,50}\n?', '', document, flags=re.MULTILINE)
-        # Remove any remaining newlines
-        document = re.sub(r'\b(?:https?://[^\s]{1,100})\b\s*$', '', document, flags=re.MULTILINE)
-        # Remove any remaining newlines
-        document = re.sub(r'\s*\*\s*[^{1,10}]+\s*\n?', '', document)
-        # Remove any remaining URLs
-        document = re.sub(r'\(\s*(https?://[^\s)]+)\s*\n?\)', '', document)
-        # Remove any remaining newlines
-        document = re.sub(r'\n\s*\n', '\n', document).strip()
-        # Remove any remaining newlines
-        document = re.sub(r'\n[^\n]{1,20}\n', '', document)
-        # Remove any remaining URLs
-        document = re.sub(r'https?://[^\s]+', '', document)
-        # Remove any remaining HTML tags
-        document = re.sub(r'<[^>]+>', '', document)
-        # Remove any remaining special characters
-        document = re.sub(r'[^a-zA-Z0-9\s\.,\?!]', '', document)
-        # Remove texts like width100 height100 etc., or width="100" height="100", or width: 100px; height: 100px;
-        document = re.sub(r'\b(width|height)\s*[:=]?\s*"?\d+(?:px)?\s*"?\s*;?\s*', '', document)
-        # Remove texts like 1. A 3. C 5. E (any character followed by a dot followed by a space followed by a character followed by a space)
-        document = re.sub(r'\b\d+\.\s*[A-Za-z]\s*', '', document)
-        # Remove texts like Skip to site content, Skip directly to content, Skip to main content, etc.
-        document = re.sub(r'\bSkip\s+(to\s+|directly\s+to\s+)(site\s+content|main\s+content|search)\s*', '', document, flags=re.IGNORECASE)
-        # Remove any remaining extra spaces
-        document = re.sub(r'\s+', ' ', document)
-        # remove [facebook, twitter, instagram, linkedin, youtube, pinterest, snapchat, reddit, google, amazon, microsoft, apple, wikipedia]
-        document = re.sub(r'\b(?:facebook|twitter|instagram|linkedin|youtube|pinterest|snapchat|reddit|google|amazon|microsoft|apple|wikipedia|tiktok)\b', '', document)
-        return document
-
     def write_to_file(self, data_entry):
         with self.file_lock, open(self.current_file, "a") as f:
             f.write(json.dumps(data_entry) + ",\n")
@@ -133,6 +148,10 @@ class DomainSpider(scrapy.Spider):
     def save_visited_url(self, url):
         with open(self.visited_urls_file, "a") as f:
             f.write(url + "\n")
+
+    def save_linked_domain(self, domain):
+        with open(self.linked_domains_file, "a") as f:
+            f.write(domain + "\n")
 
     def is_valid_url(self, url):
         return any(url.startswith(prefix) for prefix in self.start_urls)

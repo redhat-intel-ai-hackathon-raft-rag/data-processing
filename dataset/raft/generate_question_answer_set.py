@@ -29,7 +29,18 @@ def generate_question_answer_set(chunk: str):
             },
             {"role": "user", "content": "Generate questions based on the following text: " + chunk}
     ]
-    questions = text_generation_pipeline(messages)
+    is_quota_limit = False
+    while (not is_quota_limit):
+        try:
+            questions = text_generation_pipeline(messages)
+            is_quota_limit = True
+        except Exception as e:
+            if "RESOURCE_EXHAUSTED" in str(e):
+                is_quota_limit = False
+                # wait for 5 seconds
+                time.sleep(5)
+            else:
+                raise e
     try:
         try:
             # local or openai

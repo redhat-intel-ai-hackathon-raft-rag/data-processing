@@ -172,3 +172,4 @@ dataset/raw_dataset/scraper/visited_urls.txt
 *.epub
 *.part
 *.7z
+linked_domains.txt

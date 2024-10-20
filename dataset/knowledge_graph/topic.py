@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import time
 
 from dataset.knowledge_graph.const import country_names
 from dataset.knowledge_graph.const import country_names_with_government
@@ -15,8 +16,6 @@ def generate_topic(text: str):
                     You will be asked to generate topics and proper_nouns.
                     Instruction:
                     - Topics should be unified words to construct a graph
-                    - Lower score for proper nouns
-                    - Significantly Higher score for medical topics
                     - Topics should be the words appeared in the text
                     - If the text have no relevant topics, return nothing
                     - Extract topics from the text as json format with score by each topic 
@@ -36,43 +35,74 @@ def generate_topic(text: str):
                 "content":
                     """
                     - No words other than the json output
-                    - Include only the topics and proper_nouns in your response.
+                    - Include only the topics in your response
                     - Topics should be the words appeared in the text
+                    - Output at most the top 5 topics
                     - Significantly Higher score for medical topics
                     - Significantly Higher score for health topics
-                    - Only output at most the top 5 topics
+                    - Lower score for proper nouns
                     """
             },
             {"role": "user", "content": "Generate topics based on the following text: " + text}
         ]
-        topics = text_generation_pipeline(messages)
+        is_quota_limit = False
+        while (not is_quota_limit):
+            try:
+                topics = text_generation_pipeline(messages)
+                is_quota_limit = True
+            except Exception as e:
+                if "RESOURCE_EXHAUSTED" in str(e):
+                    is_quota_limit = False
+                    # wait for 5 seconds
+                    time.sleep(5)
+                else:
+                    raise e
         try:
-            topics = topics[0]["generated_text"][3]["content"]
-            print(topics)
+            try:
+                topics = topics[0]["generated_text"][3]["content"]
+            except Exception:
+                topics = topics.choices[0].message.content
             try:
                 topics = json.loads(topics)
             except Exception:
-                topics = re.sub(r".*?({)", "{", topics)
-                topics = re.sub(r"(}).*", "}", topics)
+                # remove any characters before the first "{"
+                topics = re.sub(r".*{", "{", topics)
+                # remove any characters after the last "}"
+                topics = re.sub(r"}.*", "}", topics)
                 # remove the word "json" from the output
                 topics = re.sub(r"json", "", topics)
+                # remove the word ``` from the output
+                topics = re.sub(r"```", "", topics)
+                # remove unnecessary spaces
+                topics = re.sub(r"\s+", " ", topics)
                 try:
+                    print(topics)
                     topics = json.loads(topics)
                 except Exception as e:
-                    if e.__class__.__name__ == "JSONDecodeError":
+                    if "Expecting ',' delimiter" in str(e):
+                        # find }{ and replace with },{
+                        topics = re.sub(r"}{", "},{", topics)
+                        # find } { and replace with },{
+                        topics = re.sub(r"} {", "},{", topics)
                         try:
-                            topics = re.sub(r"([a-zA-Z0-9]+):", r'"\1":', topics)
-                            topics = re.sub(r"([a-zA-Z0-9]+),", r'"\1",', topics)
-                            topics = re.sub(r"([a-zA-Z0-9]+)}", r'"\1"}', topics)
-                            topics = re.sub(r"({[a-zA-Z0-9]+)", r'{"\1"', topics)
                             topics = json.loads(topics)
                         except Exception as e:
                             if e.__class__.__name__ == "JSONDecodeError":
-                                # remove the last line of the text
-                                topics = re.sub(r".*\n", "", topics)
-                                # remove the last delimiter
-                                topics = re.sub(r",", "", topics)
-                                topics = json.loads(topics)
+                                try:
+                                    topics = re.sub(r"([a-zA-Z0-9]+):", r'"\1":', topics)
+                                    topics = re.sub(r"([a-zA-Z0-9]+),", r'"\1",', topics)
+                                    topics = re.sub(r"([a-zA-Z0-9]+)}", r'"\1"}', topics)
+                                    topics = re.sub(r"({[a-zA-Z0-9]+)", r'{"\1"', topics)
+                                    topics = json.loads(topics)
+                                except Exception as e:
+                                    if e.__class__.__name__ == "JSONDecodeError":
+                                        # remove the last line of the text
+                                        topics = re.sub(r".*\n", "", topics)
+                                        # remove the last delimiter
+                                        topics = re.sub(r",", "", topics)
+                                        topics = json.loads(topics)
+            if topics is None or topics == {}:
+                return topics
             for topic in topics["topics"]:
                 if topic["topic"] in country_names or country_names_with_government or abbreviations_of_country:
                     topics["topics"].remove(topic)
@@ -88,13 +118,14 @@ def generate_topic(text: str):
             topics["topics"] = list({v['topic']: v for v in topics["topics"]}.values())
             return topics
         except Exception as e:
+            # the line where the error occurred
+            print(e)
+            print(e.__traceback__.tb_lineno)
             raise e
 
 
 if __name__ == "__main__":
-    processing_complete = False
-    while not processing_complete:
-        processing_failed_count = 0
+    while True:
         for root, dirs, files in os.walk("dataset/raw_dataset/scraper/"):
             for file in files:
                 if file.endswith(".json"):
@@ -104,29 +135,18 @@ if __name__ == "__main__":
                             j_array = []
                             data = json.load(f)
                             for item in data:
-                                if "topics" not in item.keys() or (item["topics"] is None):
+                                if "topics" not in item.keys():
                                     j = {}
                                     for key in item.keys():
                                         j[key] = item[key]
-                                        if key == "text":
-                                            try:
-                                                j["topics"] = generate_topic(item[key])
-                                            except Exception as e:
-                                                print(e)
-                                                processing_failed_count += 1
-                                                j_array.append(j)
+                                    try:
+                                        j["topics"] = generate_topic(item["text"])
+                                        j_array.append(j)
+                                    except Exception as e:
+                                        print(e)
+                                        j_array.append(j)
                             f.seek(0)
                             f.truncate()
                             json.dump(j_array, f, indent=4)
                         except Exception as e:
                             print(e)
-                            # remove the content after the last "]"
-                            read = f.read()
-                            read = re.sub(r"\].*", "]", read)
-                            # remove the "[]" i.e. empty list at the end
-                            read = re.sub(r"\[\]", "", read)
-                            # add the content back
-                            f.write(read)
-                            processing_failed_count += 1
-        if processing_failed_count == 0:
-            processing_complete = True
