@@ -45,18 +45,7 @@ def generate_topic(text: str):
             },
             {"role": "user", "content": "Generate topics based on the following text: " + text}
         ]
-        is_quota_limit = False
-        while (not is_quota_limit):
-            try:
-                topics = text_generation_pipeline(messages)
-                is_quota_limit = True
-            except Exception as e:
-                if "RESOURCE_EXHAUSTED" in str(e):
-                    is_quota_limit = False
-                    # wait for 5 seconds
-                    time.sleep(5)
-                else:
-                    raise e
+        topics = text_generation_pipeline(messages)
         try:
             try:
                 topics = topics[0]["generated_text"][3]["content"]

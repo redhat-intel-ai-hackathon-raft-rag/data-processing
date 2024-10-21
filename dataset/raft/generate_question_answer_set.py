@@ -12,7 +12,6 @@ def generate_question_answer_set(chunk: str):
                     Instructions:
                     - Generate one question per line
                     - Generate only questions
-                    - Questions should be succinct
                     - Questions should be complete sentences
                     - Questions should be self-contained
                     - Questions should be answerable
@@ -29,25 +28,14 @@ def generate_question_answer_set(chunk: str):
             },
             {"role": "user", "content": "Generate questions based on the following text: " + chunk}
     ]
-    is_quota_limit = False
-    while (not is_quota_limit):
-        try:
-            questions = text_generation_pipeline(messages)
-            is_quota_limit = True
-        except Exception as e:
-            if "RESOURCE_EXHAUSTED" in str(e):
-                is_quota_limit = False
-                # wait for 5 seconds
-                time.sleep(5)
-            else:
-                raise e
+    questions = text_generation_pipeline(messages)
     try:
         try:
-            # local or openai
-            questions = questions[0]["generated_text"][2]["content"].split("\n")
-        except Exception:
             # gemini
             questions = questions.choices[0].message.content.split("\n")
+        except Exception:
+            # local or openai
+            questions = questions[0]["generated_text"][3]["content"].split("\n")
         for question in questions:
             question = question.replace("Generate questions based on the following text:", "")
             if question == "" or question == " ":
@@ -75,23 +63,12 @@ def generate_question_answer_set(chunk: str):
                         "content": question,
                         "context": chunk
                     }]
-                is_quota_limit = False
-                while (not is_quota_limit):
-                    try:
-                        answer = text_generation_pipeline(messages)
-                        is_quota_limit = True
-                    except Exception as e:
-                        if "RESOURCE_EXHAUSTED" in str(e):
-                            is_quota_limit = False
-                            # wait for 5 seconds
-                            time.sleep(5)
-                        else:
-                            raise e
+                answer = text_generation_pipeline(messages)
                 try:
-                    # local or openai
+                    # gemini
                     answer = answer[0]["generated_text"][2]["content"]
                 except Exception:
-                    # gemini
+                    # local or openai
                     answer = answer.choices[0].message.content
                 if question == "" or question == " " or question == "\n" or question is None:
                     raise Exception("Empty question")

@@ -24,15 +24,10 @@ if __name__ == "__main__":
                     "content": "Summarize the following text: " + chunk.page_content
                 }
             ]
-            result = None
-            while result is None:
-                try:
-                    result = text_generation_pipeline(messages)
-                except Exception as e:
-                    if "RESOURCE_EXHAUSTED" in str(e):
-                        time.sleep(5)
-                        continue
-                    else:
-                        raise e
-            summary = result.choices[0].message.content
-            print(summary)
+            result = text_generation_pipeline(messages)
+            try:
+                summary = result[0]["generated_text"][1]["content"]
+                print(summary)
+            except Exception:
+                summary = result.choices[0].message.content
+                print(summary)

@@ -1,3 +1,4 @@
+from multiprocessing import Process
 from urllib.parse import urlparse
 import scrapy
 import json
@@ -25,11 +26,11 @@ def watchdog():
         
         if time_since_last_crawl > timeout:
             print(f"No activity for {timeout} seconds. Restarting the crawler process...")
-            time.sleep(5)  # Wait for 5 seconds before restarting the crawl
+            time.sleep(1)  # Wait for 5 seconds before restarting the crawl
             reactor.stop()  # Stop the current Twisted reactor (which stops the crawl)
             break  # Exit the watchdog loop and start a new crawl
 
-        time.sleep(5)  # Check every 5 seconds
+        time.sleep(1)  # Check every 5 seconds
 
 
 
@@ -95,11 +96,20 @@ class DomainSpider(scrapy.Spider):
         document_transformer.ignore_links = True
         document_transformer.ignore_images = True
         continue_crawl = True
+        title = ""
+        locale = ""
         try:
             soup = BeautifulSoup(response.text, 'html.parser')
+            title = soup.title.string
+            locale = soup.html.get("lang")
             main_content = soup.body
         except Exception:
             continue_crawl = False
+        try:
+            if locale != "en":
+                continue_crawl = False
+        except Exception:
+            pass
         links = response.css('a::attr(href)').getall()
         # remove links which include [facebook, twitter, instagram, linkedin, youtube, pinterest, snapchat, reddit, google, amazon, microsoft, apple, wikipedia]
         link_list = [response.urljoin(link) for link in links]
@@ -137,7 +147,9 @@ class DomainSpider(scrapy.Spider):
                 data_entry = {
                     "url": response.url,
                     "text": document,
-                    "links": link_list_without_same_domain
+                    "domain": toplevel_domain,
+                    "links": link_list_without_same_domain,
+                    "title": title
                 }
                 if link_list_without_same_domain:
                     for link in link_list_without_same_domain:
@@ -225,11 +237,23 @@ def run_spider():
     process.start()  # This will block until the reactor stops
 
 
+def start_spider_process():
+    p = Process(target=run_spider)
+    p.start()
+    p.join()
+    p2 = Process(target=run_spider)
+    p2.start()
+    p2.join()
+    p3 = Process(target=run_spider)
+    p3.start()
+    p3.join()
+
+
 if __name__ == "__main__":
     from scrapy.crawler import CrawlerProcess
     while True:
         last_crawl_time = time.time()
-        run_spider()
+        start_spider_process()
         # process = CrawlerProcess()
         # process.crawl(DomainSpider)
         # process.start()

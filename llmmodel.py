@@ -12,6 +12,7 @@ from transformers import GPT2TokenizerFast
 from FlagEmbedding import BGEM3FlagModel
 from langchain_openai import OpenAIEmbeddings
 from vertexai.language_models import TextEmbeddingInput
+from openai import OpenAI
 
 from gcloud_conf import geminiclient, refresh_client, embedding_model, TaskType
 load_dotenv()
@@ -53,6 +54,9 @@ def embedding_pipeline(texts: list[str], task_type: TaskType):
 # topic_model = SentenceTransformer("BAAI/bge-m3")
 # ner_pipeline = pipeline("ner", model="dbmdz/bert-large-cased-finetuned-conll03-english", aggregation_strategy="simple")
 # bge_model = BGEM3FlagModel('BAAI/bge-m3',  use_fp16=True)
+openaiclient = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY")
+)
 
 
 def text_generation_pipeline(messages):
@@ -65,8 +69,21 @@ def text_generation_pipeline(messages):
     except Exception as e:
         if "invalid" in str(e).lower():
             refresh_client()
-            response = geminiclient.chat.completions.create(
-                model="google/gemini-1.5-flash-002",
+            try:
+                response = geminiclient.chat.completions.create(
+                    model="google/gemini-1.5-flash-002",
+                    messages=messages,
+                    stream=False
+                )
+            except Exception:
+                response = openaiclient.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=messages,
+                    stream=False
+                )
+        elif "RESOURCE_EXHAUSTED" in str(e):
+            response = openaiclient.chat.completions.create(
+                model="gpt-4o-mini",
                 messages=messages,
                 stream=False
             )
