@@ -116,7 +116,7 @@ def generate_topic(text: str):
                     pass
             # remove duplicate topics
             topics["topics"] = list({v['topic']: v for v in topics["topics"]}.values())
-            return topics
+            return topics["topics"]
         except Exception as e:
             # the line where the error occurred
             print(e)
@@ -135,16 +135,15 @@ if __name__ == "__main__":
                             j_array = []
                             data = json.load(f)
                             for item in data:
+                                j = {}
+                                for key in item.keys():
+                                    j[key] = item[key]
                                 if "topics" not in item.keys():
-                                    j = {}
-                                    for key in item.keys():
-                                        j[key] = item[key]
                                     try:
                                         j["topics"] = generate_topic(item["text"])
-                                        j_array.append(j)
                                     except Exception as e:
                                         print(e)
-                                        j_array.append(j)
+                                j_array.append(j)
                             f.seek(0)
                             f.truncate()
                             json.dump(j_array, f, indent=4)

@@ -6,7 +6,31 @@ from bs4 import BeautifulSoup
 import os
 import time
 import threading
+from twisted.internet import reactor
 from dataset.raw_dataset.clean_document import clean_document
+
+# Define a global variable to track the last crawl time
+last_crawl_time = time.time()
+timeout = 60  # 1 minute
+signals = scrapy.signals
+
+
+def watchdog():
+    """
+    This function will monitor the crawling process and restart the spider if no new crawl occurs within the timeout period.
+    """
+    global last_crawl_time
+    while True:
+        time_since_last_crawl = time.time() - last_crawl_time
+        
+        if time_since_last_crawl > timeout:
+            print(f"No activity for {timeout} seconds. Restarting the crawler process...")
+            time.sleep(5)  # Wait for 5 seconds before restarting the crawl
+            reactor.stop()  # Stop the current Twisted reactor (which stops the crawl)
+            break  # Exit the watchdog loop and start a new crawl
+
+        time.sleep(5)  # Check every 5 seconds
+
 
 
 class DomainSpider(scrapy.Spider):
@@ -65,6 +89,8 @@ class DomainSpider(scrapy.Spider):
         return new_file
 
     def parse(self, response):
+        global last_crawl_time
+        last_crawl_time = time.time() 
         document_transformer = html2text.HTML2Text()
         document_transformer.ignore_links = True
         document_transformer.ignore_images = True
@@ -167,8 +193,43 @@ class DomainSpider(scrapy.Spider):
                     f.truncate()
             f.write("\n]")
 
+    def closed(self, reason):
+        self.close()
+
+
+def on_spider_idle():
+    """
+    Signal handler to detect when the spider becomes idle (stuck).
+    """
+    global last_crawl_time
+    last_crawl_time = time.time()  # Update the last crawl time on spider idle
+    print("Spider is idle. Last activity time updated.")
+
+
+def run_spider():
+    """
+    Function to run the spider with a timeout mechanism.
+    """
+    global last_crawl_time
+    process = CrawlerProcess()
+
+    # Attach signal handlers
+    process.crawl(DomainSpider)
+    
+    # Connect a signal handler to the spider idle signal to keep track of activity
+    crawler = list(process.crawlers)[0]
+    crawler.signals.connect(on_spider_idle, signal=signals.spider_idle)
+    
+    # Start the crawling process
+    threading.Thread(target=watchdog, daemon=True).start()  # Run the watchdog in a separate thread
+    process.start()  # This will block until the reactor stops
+
+
 if __name__ == "__main__":
     from scrapy.crawler import CrawlerProcess
-    process = CrawlerProcess()
-    process.crawl(DomainSpider)
-    process.start()
+    while True:
+        last_crawl_time = time.time()
+        run_spider()
+        # process = CrawlerProcess()
+        # process.crawl(DomainSpider)
+        # process.start()

@@ -1,22 +1,25 @@
 import json
 import os
 import torch
+from dotenv import load_dotenv
 from transformers import AutoTokenizer, pipeline, AutoModelForCausalLM
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain_huggingface import HuggingFaceEmbeddings
 from sentence_transformers import SentenceTransformer
-from FlagEmbedding import BGEM3FlagModel
-from gcloud_conf import geminiclient
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_text_splitters import TokenTextSplitter
 from transformers import GPT2TokenizerFast
+from FlagEmbedding import BGEM3FlagModel
 from langchain_openai import OpenAIEmbeddings
-from dotenv import load_dotenv
+from vertexai.language_models import TextEmbeddingInput
+
+from gcloud_conf import geminiclient, refresh_client, embedding_model, TaskType
 load_dotenv()
 
-LLM_MODEL_NAME = "meta-llama/Llama-3.2-1B-Instruct"
-model = AutoModelForCausalLM.from_pretrained(LLM_MODEL_NAME)
-tokenizer = AutoTokenizer.from_pretrained(LLM_MODEL_NAME)
+
+# LLM_MODEL_NAME = "meta-llama/Llama-3.2-1B-Instruct"
+# model = AutoModelForCausalLM.from_pretrained(LLM_MODEL_NAME)
+# tokenizer = AutoTokenizer.from_pretrained(LLM_MODEL_NAME)
 # text_generation_pipeline = pipeline(
 #         "text-generation",
 #         model=model,
@@ -37,44 +40,40 @@ gradient_chunker = SemanticChunker(OpenAIEmbeddings(
     api_key=os.getenv("OPENAI_API_KEY")),
     breakpoint_threshold_type="gradient"
 )
+
+
+def embedding_pipeline(texts: list[str], task_type: TaskType):
+    inputs = [TextEmbeddingInput(text, task_type) for text in texts]
+    return embedding_model.get_embeddings(inputs)
 # text_splitter = TokenTextSplitter(chunk_size=100, chunk_overlap=10)
 # text_splitter = CharacterTextSplitter.from_huggingface_tokenizer(
 #     GPT2TokenizerFast.from_pretrained("gpt2"), chunk_size=100, chunk_overlap=20
 # )
 # topic_model = SentenceTransformer('all-MiniLM-L6-v2')
-topic_model = SentenceTransformer("BAAI/bge-m3")
-ner_pipeline = pipeline("ner", model="dbmdz/bert-large-cased-finetuned-conll03-english", aggregation_strategy="simple")
-bge_model = BGEM3FlagModel('BAAI/bge-m3',  use_fp16=True)
+# topic_model = SentenceTransformer("BAAI/bge-m3")
+# ner_pipeline = pipeline("ner", model="dbmdz/bert-large-cased-finetuned-conll03-english", aggregation_strategy="simple")
+# bge_model = BGEM3FlagModel('BAAI/bge-m3',  use_fp16=True)
 
 
 def text_generation_pipeline(messages):
-    response = geminiclient.chat.completions.create(
-        model="google/gemini-1.5-flash-002",
-        messages=messages,
-        stream=False
-    )
-    print(response)
+    try:
+        response = geminiclient.chat.completions.create(
+            model="google/gemini-1.5-flash-002",
+            messages=messages,
+            stream=False
+        )
+    except Exception as e:
+        if "invalid" in str(e).lower():
+            refresh_client()
+            response = geminiclient.chat.completions.create(
+                model="google/gemini-1.5-flash-002",
+                messages=messages,
+                stream=False
+            )
+        else:
+            raise e
     return response
 
 
 if __name__ == "__main__":
-    from dataset.raft.generate_question_answer_set import generate_question_answer_set
-    print(tokenizer("What is the capital of France?", return_tensors="pt"))
-    chunks = ""
-    with open("sample.txt", "r") as file:
-        chunks = file.read()
-    chunks = text_splitter.create_documents([chunks])
-    num_chunks = len(chunks)
-    idx = 0
-    q_a_set = []
-    for chunk in chunks:
-        if len(chunk.page_content) > 800:
-            parts = text_splitter.split_text(chunk.page_content)
-            for part in parts:
-                j_array = generate_question_answer_set(part)
-                q_a_set.extend(j_array)
-            continue
-        j_array = generate_question_answer_set(chunk.page_content)
-        q_a_set.extend(j_array)
-    with open("qa_set.json", "w") as file:
-        json.dump(q_a_set, file)
+    print(len(embedding_pipeline(["Hello, world!", "Goodbye, world!"], TaskType.RETRIEVAL_QUERY)[1].values))

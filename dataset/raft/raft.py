@@ -59,6 +59,14 @@ def raft(args):
             print(dataset)
             with open(f"{args.output_folder}/{i}_raft_{file_name}.json", "w") as f:
                 json.dump(dataset, f, indent=4)
+            combined_data = {}
+            for key, value in item.items():
+                combined_data[key] = value
+            combined_data["raft"] = dataset
+            with open(f"{args.file_path}", "r+") as f:
+                f.seek(0)
+                f.truncate()
+                json.dump(combined_data, f, indent=4)
 
 
 if __name__ == "__main__":
