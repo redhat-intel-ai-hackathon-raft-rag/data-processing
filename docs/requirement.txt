@@ -1,9 +1,0 @@
-## actor
-
-user
-
-## requirement
-
-user can get domain specific answers with domain specific questions
-
-TODO which domain?
