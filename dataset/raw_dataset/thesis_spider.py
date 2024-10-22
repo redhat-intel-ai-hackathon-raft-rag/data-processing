@@ -1,3 +1,4 @@
+import os
 from playwright.async_api import async_playwright
 import asyncio
 import re
@@ -15,21 +16,20 @@ def load_start_urls():
         # remove any extra + signs
         topic = re.sub(r"\++", " ", topic)
         topic = re.sub(r"\s+", "+", topic)
-        published_years = [str(year) for year in range(2020, 2024)]
-        query_strings = []
+        published_years = [str(year) for year in range(2015, 2024)]
         for i in range(len(published_years)):
-            query_string = f"&termtype_{i+1}=year&termval_{i+1}={published_years[i]}"
-            query_strings.append(query_string)
-        start_urls.append(f"https://annas-archive.org/search?index=journals&page=1&q={topic}&acc=aa_scidb&src=lgli&sort=newest&lang=en" + "".join(query_strings))
+            query_string = f"&termtype_1=year&termval_1={published_years[i]}"
+            start_urls.append(f"https://annas-archive.org/search?index=journals&page=1&q={topic}&acc=aa_scidb&src=lgli&sort=newest&lang=en" + query_string)
     return start_urls
 
 
 async def scrape_links(page, url):
+    print(f"Scraping links from {url}")
     await page.goto(url)
     content = await page.content()
     soup = BeautifulSoup(content, 'html.parser')
-    main_content = soup.find('main')
-    links = main_content.find_all('a')
+    # main_content = soup.find('main')
+    links = soup.find_all('a')
     new_links = []
     for link in links:
         if link.get('href') is not None and link.get('class') is not None and 'js-vim-focus' in link.get('class'):
@@ -42,6 +42,7 @@ async def scrape_links(page, url):
 
 
 async def login(browser, url):
+    print(f"Logging in to {url}")
     page = await browser.new_page()
     await page.goto(url)
     return page
@@ -76,22 +77,29 @@ async def scrape_file_page(page, url):
 
 async def main():
     login_url = "https://annas-archive.org"
-    async with async_playwright() as playwright:
-        start_urls = load_start_urls()
-        for url in start_urls:
-            try:
-                browser = await playwright.chromium.launch(headless=True, slow_mo=1000)
-                page = await login(browser, login_url)
-                file_pages = await scrape_links(page, url)
-                for file_page in file_pages:
-                    await scrape_file_page(page, file_page)
-                with open("dataset/raw_dataset/thesis/visited_urls.txt", "a") as f:
-                    f.write(url + "\n")
-            except Exception as e:
-                print(e)
-            finally:
-                if browser is not None:
-                    await browser.close()
+    while True:
+        async with async_playwright() as playwright:
+            start_urls = load_start_urls()
+            browser = await playwright.chromium.launch(headless=True, slow_mo=1000)
+            for url in start_urls:
+                try:
+                    if os.path.exists("dataset/raw_dataset/thesis/visited_urls.txt"):
+                        with open("dataset/raw_dataset/thesis/visited_urls.txt", "r") as f:
+                            visited_urls = f.read().splitlines()
+                        if url in visited_urls:
+                            continue
+                    else:
+                        with open("dataset/raw_dataset/thesis/visited_urls.txt", "w") as f:
+                            f.write("")
+                    page = await login(browser, login_url)
+                    file_pages = await scrape_links(page, url)
+                    for file_page in file_pages:
+                        await scrape_file_page(page, file_page)
+                    with open("dataset/raw_dataset/thesis/visited_urls.txt", "a") as f:
+                        f.write(url + "\n")
+                except Exception as e:
+                    print(e)
+            browser.close()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main(), debug=True)

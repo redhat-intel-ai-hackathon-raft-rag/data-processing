@@ -59,6 +59,14 @@ def generate_question_answer_set(chunk: str):
                         """
                     },
                     {
+                        "role": "system",
+                        "content":
+                            """
+                            - You should generate answer even if enough information is not provided.
+                            - If there is not enough information to answer the question, you should state that.
+                            """
+                    },
+                    {
                         "role": "user",
                         "content": question,
                         "context": chunk
@@ -66,7 +74,7 @@ def generate_question_answer_set(chunk: str):
                 answer = text_generation_pipeline(messages)
                 try:
                     # gemini
-                    answer = answer[0]["generated_text"][2]["content"]
+                    answer = answer[0]["generated_text"][3]["content"]
                 except Exception:
                     # local or openai
                     answer = answer.choices[0].message.content

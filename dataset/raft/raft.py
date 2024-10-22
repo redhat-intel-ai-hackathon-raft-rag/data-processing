@@ -41,32 +41,51 @@ def raft(args):
             if data.startswith("["):
                 args.doc_type = "json_array"
     if args.doc_type not in ["json_array"]:
+        combined_data = {}
         chunks = data_to_chunks(
             args.file_path,
             args.doc_type,
             args.text_field_name
         )
-        dataset = chunks_to_dataset(chunks)
-        with open(f"{args.output_folder}/{i}_raft_{file_name}.json", "w") as f:
-            json.dump(dataset, f, indent=4)
+        if args.doc_type in ["json"]:
+            with open(f"{args.file_path}", "r") as f:
+                data = json.load(f)
+            for key in data.keys():
+                combined_data[key] = data[key]
+            if "raft" not in data.keys():
+                dataset = chunks_to_dataset(chunks)
+                combined_data["raft"] = dataset
+            with open(f"{args.output_folder}/raft_{file_name}.json", "w") as f:
+                json.dump(combined_data, f, indent=4)
+        else:
+            dataset = chunks_to_dataset(chunks)
+            with open(f"{args.output_folder}/raft_{file_name}.json", "w") as f:
+                json.dump(dataset, f, indent=4)
     if args.doc_type in ["json_array"]:
         with open(args.file_path, "r") as f:
             data = json.load(f)
+        combined_data = []
         for i, item in enumerate(data):
-            dataset = chunks_to_dataset(item[args.text_field_name])
-            if len(dataset) == 0:
-                continue
-            print(dataset)
-            with open(f"{args.output_folder}/{i}_raft_{file_name}.json", "w") as f:
-                json.dump(dataset, f, indent=4)
-            combined_data = {}
-            for key, value in item.items():
-                combined_data[key] = value
-            combined_data["raft"] = dataset
-            with open(f"{args.file_path}", "r+") as f:
-                f.seek(0)
-                f.truncate()
-                json.dump(combined_data, f, indent=4)
+            # if item contains ['raft'] key, skip
+            try:
+                if "raft" in item.keys():
+                    combined_data.append(item)
+                    continue
+                dataset = chunks_to_dataset(item[args.text_field_name])
+                if len(dataset) == 0:
+                    combined_data.append(item)
+                    continue
+                with open(f"{args.output_folder}/{i}_raft_{file_name}.json", "w") as f:
+                    json.dump(dataset, f, indent=4)
+                item["raft"] = dataset
+                combined_data.append(item)
+            except Exception as e:
+                print(f"Error in processing data {i}: {e}")
+                combined_data.append(item)
+        with open(f"{args.file_path}", "r+") as f:
+            f.seek(0)
+            f.truncate()
+            json.dump(combined_data, f, indent=4)
 
 
 if __name__ == "__main__":

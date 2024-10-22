@@ -1,11 +1,10 @@
 import os
 from dotenv import load_dotenv
-
 import vertexai
 import openai
-from google.auth import default, transport
+from google.auth import transport
 from google.oauth2 import service_account
-from vertexai.language_models import TextEmbeddingInput, TextEmbeddingModel
+from vertexai.language_models import TextEmbeddingModel
 
 
 load_dotenv()
@@ -36,8 +35,6 @@ class TaskType:
     QUESTION_ANSWERING = "QUESTION_ANSWERING"
     FACT_VERIFICATION = "FACT_VERIFICATION"
     CODE_RETRIEVAL_QUERY = "CODE_RETRIEVAL_QUERY"
-# they were trained for the different downstream tasks,
-# so it's good to use the same task type for the same task
 
 
 def refresh_client():
@@ -47,7 +44,3 @@ def refresh_client():
         base_url=f"https://{location}-aiplatform.googleapis.com/v1beta1/projects/{PROJECT_ID}/locations/{location}/endpoints/openapi",
         api_key=credentials.token,
     )
-
-
-if __name__ == "__main__":
-    print(embedding_pipeline(["Hello, world!"], TaskType.RETRIEVAL_QUERY))

@@ -6,7 +6,7 @@ import time
 from dataset.knowledge_graph.const import country_names
 from dataset.knowledge_graph.const import country_names_with_government
 from dataset.knowledge_graph.const import abbreviations_of_country
-from llmmodel import text_generation_pipeline
+from llmmodel import text_generation_pipeline, text_splitter, percentile_chunker
 
 def generate_topic(text: str):
         messages = [
@@ -112,6 +112,19 @@ def generate_topic(text: str):
             print(e.__traceback__.tb_lineno)
             raise e
 
+def handle_large_text(text: str):
+    texts = []
+    text_length = len(text)
+    if text_length > 100000:
+        try:
+            chunks = text_splitter.split_text(text)
+        except Exception:
+            chunks = percentile_chunker.split_text(text)
+        for chunk in chunks:
+            temp_texts = handle_large_text(chunk)
+            texts.extend(temp_texts)
+    return texts
+
 
 if __name__ == "__main__":
     while True:
@@ -132,6 +145,21 @@ if __name__ == "__main__":
                                         j["topics"] = generate_topic(item["text"])
                                     except Exception as e:
                                         print(e)
+                                        if "Request too large" in str(e):
+                                            texts = handle_large_text(item["text"])
+                                            temp_j_array = []
+                                            for text in texts:
+                                                try:
+                                                    topics = generate_topic(text)
+                                                    temp_j = {}
+                                                    for key in j.keys():
+                                                        temp_j[key] = j[key]
+                                                    temp_j["topics"] = topics
+                                                    temp_j_array.append(temp_j)
+                                                    continue
+                                                except Exception as e:
+                                                    print(e.__traceback__.tb_lineno)
+                                                    print(e)
                                 j_array.append(j)
                             f.seek(0)
                             f.truncate()
