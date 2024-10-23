@@ -16,7 +16,7 @@ class Neo4jClient:
         with self.driver.session() as session:
             session.run(query, id=id, url=url, text=text, links=links, domain=domain, title=title)
 
-   def create_book(self, id, title=None, cites=None):
+    def create_book(self, id, title=None, cites=None):
         """
         Create a Book node. If 'cites' is provided (list of book ids), create CITES relationships.
         """
@@ -31,7 +31,6 @@ class Neo4jClient:
             with self.driver.session() as session:
                 for cited_id in cites:
                     self.create_citation(id, cited_id)
-
 
     def create_book_document(self, id, text, book_id):
         query = """
@@ -52,31 +51,47 @@ class Neo4jClient:
         with self.driver.session() as session:
             session.run(query, book_id=book_id, cites_id=cites_id)
 
+
 # Example usage
 if __name__ == "__main__":
-    # Connect to Neo4j
-    neo4j_client = Neo4jClient(uri="bolt://localhost:7687", user="neo4j", password="password")
+    # query web page with sql alchemy
+    from inference.db.sqldb import Webpage, WebpageLink, Book, BookCite, \
+        BookDocument, engine
+    from sqlalchemy.orm import sessionmaker
+    
+    # Define session for SQLAlchemy
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    
+    webpages = session.query(Webpage).all()
+    for webpage in webpages:
+        # print(webpage.id, webpage.text, webpage.domain, webpage.title)
+        links = session.query(WebpageLink).filter(WebpageLink.webpage_id == webpage.id).all()
+        for link in links:
+            print(link)
+    # # Connect to Neo4j
+    # neo4j_client = Neo4jClient(uri="bolt://localhost:7687", user="neo4j", password="password")
 
-    # Creating Webpage nodes
-    neo4j_client.create_webpage(
-        id=1,
-        url="https://example.com",
-        text="Example webpage content",
-        links=["https://link1.com", "https://link2.com"],
-        domain="example.com",
-        title="Example Webpage"
-    )
+    # # Creating Webpage nodes
+    # neo4j_client.create_webpage(
+    #     id=1,
+    #     url="https://example.com",
+    #     text="Example webpage content",
+    #     links=["https://link1.com", "https://link2.com"],
+    #     domain="example.com",
+    #     title="Example Webpage"
+    # )
 
-    # Creating Book nodes
-    neo4j_client.create_book(id=1, title="First Book")
-    neo4j_client.create_book(id=2, title="Second Book")
+    # # Creating Book nodes
+    # neo4j_client.create_book(id=1, title="First Book")
+    # neo4j_client.create_book(id=2, title="Second Book")
 
-    # Creating Document nodes belonging to a book
-    neo4j_client.create_book_document(id="1_1", text="First document text", book_id=1)
-    neo4j_client.create_book_document(id="1_2", text="Second document text", book_id=1)
+    # # Creating Document nodes belonging to a book
+    # neo4j_client.create_book_document(id="1_1", text="First document text", book_id=1)
+    # neo4j_client.create_book_document(id="1_2", text="Second document text", book_id=1)
 
-    # Creating Citation relationships
-    neo4j_client.create_citation(book_id=1, cites_id=2)
+    # # Creating Citation relationships
+    # neo4j_client.create_citation(book_id=1, cites_id=2)
 
-    # Close connection
-    neo4j_client.close()
+    # # Close connection
+    # neo4j_client.close()

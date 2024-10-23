@@ -8,7 +8,7 @@ from dataset.knowledge_graph.const import country_names_with_government
 from dataset.knowledge_graph.const import abbreviations_of_country
 from llmmodel import text_generation_pipeline, text_splitter, percentile_chunker
 
-def generate_topic(text: str):
+def generate_topic(text: str) -> list[dict]:
         messages = [
             {
                 "role": "system",
@@ -48,9 +48,12 @@ def generate_topic(text: str):
         topics = text_generation_pipeline(messages)
         try:
             try:
-                topics = topics[0]["generated_text"][3]["content"]
-            except Exception:
                 topics = topics.choices[0].message.content
+            except Exception:
+                try:
+                    topics = topics[0]["generated_text"][3]["content"]
+                except Exception:
+                    topics = topics.message.content[0].text
             try:
                 topics = json.loads(topics)
             except Exception:

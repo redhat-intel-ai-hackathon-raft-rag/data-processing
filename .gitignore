@@ -174,3 +174,6 @@ dataset/raw_dataset/scraper/visited_urls.txt
 *.7z
 linked_domains.txt
 chroma
+temp*.txt
+raft*.json
+*extracted_text*

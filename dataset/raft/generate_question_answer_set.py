@@ -34,8 +34,12 @@ def generate_question_answer_set(chunk: str):
             # gemini
             questions = questions.choices[0].message.content.split("\n")
         except Exception:
-            # local or openai
-            questions = questions[0]["generated_text"][3]["content"].split("\n")
+            try:
+                # local or openai
+                questions = questions[0]["generated_text"][3]["content"].split("\n")
+            except Exception:
+                # cohere
+                questions = questions.message.content[0].text.split("\n")
         for question in questions:
             question = question.replace("Generate questions based on the following text:", "")
             if question == "" or question == " ":
@@ -77,7 +81,11 @@ def generate_question_answer_set(chunk: str):
                     answer = answer[0]["generated_text"][3]["content"]
                 except Exception:
                     # local or openai
-                    answer = answer.choices[0].message.content
+                    try:
+                        answer = answer.choices[0].message.content
+                    except Exception:
+                        # cohere
+                        answer = answer.message.content[0].text
                 if question == "" or question == " " or question == "\n" or question is None:
                     raise Exception("Empty question")
                 if answer == "" or answer == " " or answer == "\n" or answer is None:

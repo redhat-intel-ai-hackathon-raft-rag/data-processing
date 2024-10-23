@@ -49,9 +49,12 @@ def get_medical_topics():
             ]
             topics = text_generation_pipeline(messages)
             try:
-                topics = topics[0]["generated_text"][3]["content"]
-            except Exception:
                 topics = topics.choices[0].message.content
+            except Exception:
+                try:
+                    topics = topics[0]["generated_text"][3]["content"]
+                except Exception:
+                    topics = topics.message.content[0].text
             print(topics)
             topics = topics.split("\n")
             refined_medical_topics.extend(topics)

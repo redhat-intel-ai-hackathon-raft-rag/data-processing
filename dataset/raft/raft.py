@@ -78,6 +78,7 @@ def raft(args):
                 with open(f"{args.output_folder}/{i}_raft_{file_name}.json", "w") as f:
                     json.dump(dataset, f, indent=4)
                 item["raft"] = dataset
+                print(f"Added raft for {item['url']}")
                 combined_data.append(item)
             except Exception as e:
                 print(f"Error in processing data {i}: {e}")

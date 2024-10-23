@@ -2,21 +2,26 @@ import random
 from typing import List
 from dataset.raft.distructors_generator import distructors_generator
 from dataset.raft.generate_question_answer_set import generate_question_answer_set
-from llmmodel import text_splitter
-
+from llmmodel import text_splitter, percentile_chunker, gradient_chunker
+    
 
 def chunks_to_dataset(chunks: str, distuctor_only_dataset_ratio=0.2) -> List[dict]:
-    try:
-        chunks = text_splitter.create_documents([chunks])
-    except Exception:
-        print(chunks)
-        raise
+    if len(chunks) > 3000:
+        try:
+            chunks = text_splitter.split_text(chunks)
+        except Exception:
+            print(chunks)
+            raise
+    else:
+        chunks = [chunks]    
     num_chunks = len(chunks)
     idx = 0
     dataset = []
+    print(f"Number of chunks: {num_chunks}")
     for chunk in chunks:
-        if len(chunk.page_content) > 800:
-            parts = text_splitter.split_text(chunk.page_content)
+        if len(chunk) > 3000:
+            print(f"Chunk too long: {len(chunk)}")
+            parts = percentile_chunker.split_text(chunk)
             for part in parts:
                 j_array = generate_question_answer_set(part)
                 for j in j_array:
@@ -44,28 +49,28 @@ def chunks_to_dataset(chunks: str, distuctor_only_dataset_ratio=0.2) -> List[dic
                         }
                     dataset.append(d)
             continue
-        j_array = generate_question_answer_set(chunk.page_content)
+        j_array = generate_question_answer_set(chunk)
         for j in j_array:
             dice = random.randint(0, 1)
             if dice > distuctor_only_dataset_ratio and num_chunks > 1:
                 d = {
                     "instruction": j["question"],
-                    "input": "\n".join(str(d) for d in distructors_generator(chunks, idx, num_distructors=3)) + "\n" + chunk.page_content,
-                    "oracle_input": chunk.page_content,
+                    "input": "\n".join(str(d) for d in distructors_generator(chunks, idx, num_distructors=3)) + "\n" + chunk,
+                    "oracle_input": chunk,
                     "output": j["answer"]
                 }
             elif dice <= distuctor_only_dataset_ratio and num_chunks > 1:
                 d = {
                     "instruction": j["question"],
                     "input": "\n".join(str(d) for d in distructors_generator(chunks, idx, num_distructors=3)),
-                    "oracle_input": chunk.page_content,
+                    "oracle_input": chunk,
                     "output": j["answer"]
                 }
             else:
                 d = {
                     "instruction": j["question"],
-                    "input": chunk.page_content,
-                    "oracle_input": chunk.page_content,
+                    "input": chunk,
+                    "oracle_input": chunk,
                     "output": j["answer"]
                 }
             dataset.append(d)

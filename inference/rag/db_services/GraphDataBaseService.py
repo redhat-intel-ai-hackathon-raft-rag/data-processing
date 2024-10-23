@@ -4,12 +4,15 @@ from neo4j import GraphDatabase
 class GraphDatabaseService:
     def __init__(self, uri, user, password):
         self.driver = GraphDatabase.driver(uri, auth=(user, password))
-    
+
     def close(self):
         self.driver.close()
-    
+
     def expand_community(self, node_id):
-        """Expand community around a specific node using Louvain or similar algorithms."""
+        """
+        Expand community around a specific node
+        using Louvain or similar algorithms.
+        """
         query = """
         CALL gds.louvain.stream({
             nodeProjection: 'Node',
@@ -35,7 +38,7 @@ class GraphDatabaseService:
         with self.driver.session() as session:
             result = session.run(query, topic=topic)
             return [record['n'] for record in result]
-    
+
     def store_properties(self, node_id, properties):
         """Store calculated properties like influence score in a Neo4j node."""
         query = """
