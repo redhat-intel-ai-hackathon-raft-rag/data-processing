@@ -22,7 +22,7 @@ def generate_question_answer_set(chunk: str):
                 "role": "system",
                 "content":
                     """
-                    - The questions should be able to be answered in a few words or less.
+                    - You should generate medical or health-related questions.
                     - Include only the questions in your response.
                     """
             },
