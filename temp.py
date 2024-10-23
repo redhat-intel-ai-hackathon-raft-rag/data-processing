@@ -114,7 +114,7 @@ if __name__ == "__main__":
     raft_generated_dir = 'dataset/generated_dataset/'
     random_num = random.randint(0, 1000000)
     print(f"Random number: {random_num}")
-    temp_file = str(f"temp_{random_num}.txt")
+    temp_file = str(f"temp/temp_{random_num}.txt")
     with open(temp_file, 'w') as f:
         f.write("")
     process_webpages(webpages_dir, prev_ver_dir, raft_generated_dir, temp_file)
