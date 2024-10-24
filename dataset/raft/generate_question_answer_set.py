@@ -33,13 +33,17 @@ def generate_question_answer_set(chunk: str):
         try:
             # gemini
             questions = questions.choices[0].message.content.split("\n")
+            print("gemini generated questions")
         except Exception:
             try:
                 # local or openai
                 questions = questions[0]["generated_text"][3]["content"].split("\n")
+                print("local or openai generated questions")
             except Exception:
                 # cohere
                 questions = questions.message.content[0].text.split("\n")
+                print("cohere generated questions")
+        print(questions)
         for question in questions:
             question = question.replace("Generate questions based on the following text:", "")
             if question == "" or question == " ":

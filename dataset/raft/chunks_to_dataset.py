@@ -6,7 +6,7 @@ from llmmodel import text_splitter, percentile_chunker, gradient_chunker
     
 
 def chunks_to_dataset(chunks: str, distuctor_only_dataset_ratio=0.2) -> List[dict]:
-    if len(chunks) > 3000:
+    if len(chunks) > 10000:
         try:
             chunks = text_splitter.split_text(chunks)
         except Exception:
@@ -19,7 +19,7 @@ def chunks_to_dataset(chunks: str, distuctor_only_dataset_ratio=0.2) -> List[dic
     dataset = []
     print(f"Number of chunks: {num_chunks}")
     for chunk in chunks:
-        if len(chunk) > 3000:
+        if len(chunk) > 10000:
             print(f"Chunk too long: {len(chunk)}")
             parts = percentile_chunker.split_text(chunk)
             for part in parts:

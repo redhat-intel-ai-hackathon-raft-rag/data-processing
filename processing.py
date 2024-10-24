@@ -11,8 +11,8 @@ import json
 from datetime import datetime
 from llmmodel import percentile_chunker
 
+
 def process_webpages(webpages_dir, prev_ver_dir, raft_generated_dir, temp_file):
-    print(temp_file)
     webpages_list = os.listdir(webpages_dir)
     random.shuffle(webpages_list)
     backup_checkpoint = datetime.now().timestamp()
@@ -52,13 +52,14 @@ def process_webpages(webpages_dir, prev_ver_dir, raft_generated_dir, temp_file):
                             ## 2.1 add topics if not exists
                             if "topics" not in item:
                                 try:
-                                    if len(item['text']) > 5000:
+                                    if len(item['text']) > 20000:
                                         temp_topics = []
                                         texts = percentile_chunker.split_text(item['text'])
                                         for text in texts:
                                             temp_topics.extend(generate_topic(text))
                                         item['topics'] = temp_topics
-                                    item['topics'] = generate_topic(item['text'])
+                                    else:
+                                        item['topics'] = generate_topic(item['text'])
                                     updated = True
                                     backup_filepath = os.path.join(prev_ver_dir, f'{backup_checkpoint}_{file}')
                                     with open(backup_filepath, 'w') as backup_file:
