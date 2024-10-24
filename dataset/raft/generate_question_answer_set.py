@@ -12,8 +12,8 @@ def generate_question_answer_set(chunk: str):
                     Instructions:
                     - Generate one question per line
                     - Generate only questions
+                    - Generate at most 5 questions
                     - Questions should be complete sentences
-                    - Questions should be self-contained
                     - Questions should be answerable
                     - Questions should be specific
                     """

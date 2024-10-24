@@ -9,8 +9,25 @@ response_synthesizer = get_response_synthesizer(response_mode="compact")
 
 
 def synthesize_response(query_text: str, nodes: NodeWithScore):
-    pass
+    messages = [
+        {
+            "role": "system",
+            "content": ""
+        },
+        {
+            "role": "system",
+            "content": " ".join([node.node.text for node in nodes]),
+        },
+        {
+            "role": "user",
+            "content": "query_text"
+        }
+    ]
+    return response_synthesizer(messages)
 
 
 if __name__ == "__main__":
-    pass
+    query_text = "What is the capital of France?"
+    nodes = [NodeWithScore(Node(text="Paris"), 0.9)]
+    response = synthesize_response(query_text, nodes)
+    print(response)

@@ -15,6 +15,7 @@ def process_webpages(webpages_dir, prev_ver_dir, raft_generated_dir, temp_file):
     print(temp_file)
     webpages_list = os.listdir(webpages_dir)
     random.shuffle(webpages_list)
+    backup_checkpoint = datetime.now().timestamp()
     for file in webpages_list:
         if file.endswith('.json'):
             filepath = os.path.join(webpages_dir, file)
@@ -35,6 +36,14 @@ def process_webpages(webpages_dir, prev_ver_dir, raft_generated_dir, temp_file):
                                     print(f"Skipping file: {item['url']} at {filepath}")
                                     data = [item for item in data if item['url'] != item['url']]
                                     updated = True
+                                    json.dump(j_array, f, indent=4)
+                                    backup_filepath = os.path.join(prev_ver_dir, f'{backup_checkpoint}_{file}')
+                                    with open(backup_filepath, 'w') as backup_file:
+                                        json.dump(data, backup_file, indent=4)
+                                    webpage_file.seek(0)  # Move pointer to the start of the file
+                                    webpage_file.truncate()  # Clear file contents
+                                    json.dump(data, webpage_file, indent=4)
+                                    print(f"Updated file: {filepath}")
                                     continue
                                 # Mark URL as visited
                                 temporary_file.write(f"{item['url']}\n")
@@ -51,61 +60,74 @@ def process_webpages(webpages_dir, prev_ver_dir, raft_generated_dir, temp_file):
                                         item['topics'] = temp_topics
                                     item['topics'] = generate_topic(item['text'])
                                     updated = True
+                                    backup_filepath = os.path.join(prev_ver_dir, f'{backup_checkpoint}_{file}')
+                                    with open(backup_filepath, 'w') as backup_file:
+                                        json.dump(data, backup_file, indent=4)
+                                    webpage_file.seek(0)  # Move pointer to the start of the file
+                                    webpage_file.truncate()  # Clear file contents
+                                    json.dump(data, webpage_file, indent=4)
+                                    print(f"Updated file: {filepath}")
                                 except Exception as e:
                                     print(f"Error generating topics for {item['url']}: {e}")
 
                             ## 2.2 remove topic where score < 0.5
                             if "topics" in item and item['topics']:
-                                item['topics'] = [topic for topic in item['topics'] if topic.get('score', 0) >= 0.5]
-                                print(f"Updated topics for {item['url']} (Removed low-scoring topics)")
-                                updated = True
+                                if any(topic.get('score', 0) < 0.5 for topic in item['topics']):
+                                    item['topics'] = [topic for topic in item['topics'] if topic.get('score', 0) >= 0.5]
+                                    print(f"Updated topics for {item['url']} (Removed low-scoring topics)")
+                                    backup_filepath = os.path.join(prev_ver_dir, f'{backup_checkpoint}_{file}')
+                                    with open(backup_filepath, 'w') as backup_file:
+                                        json.dump(data, backup_file, indent=4)
+                                    webpage_file.seek(0)  # Move pointer to the start of the file
+                                    webpage_file.truncate()  # Clear file contents
+                                    json.dump(data, webpage_file, indent=4)
+                                    print(f"Updated file: {filepath}")
 
                             ## 2.3 remove item where topics: None or []
                             if not item.get('topics'):
                                 data = [item for item in data if item.get('topics')]
                                 print(f"Removing item: {item['url']} due to empty topics")
                                 updated = True
+                                backup_filepath = os.path.join(prev_ver_dir, f'{backup_checkpoint}_{file}')
+                                with open(backup_filepath, 'w') as backup_file:
+                                    json.dump(data, backup_file, indent=4)
+                                webpage_file.seek(0)  # Move pointer to the start of the file
+                                webpage_file.truncate()  # Clear file contents
+                                json.dump(data, webpage_file, indent=4)
+                                print(f"Updated file: {filepath}")
                                 continue
                             # # ## 2.4 add raft generated q,a if not exists raft key
                             if "raft" not in item:
                                 dataset = chunks_to_dataset(item['text'])
                                 item['raft'] = dataset
                                 print(f"Added raft for {item['url']}")
-                                updated = True
                                 raft_generated_file_path = os.path.join(raft_generated_dir, f"raft_{datetime.now().timestamp()}_{file}")
                                 with open(raft_generated_file_path, "w") as f:
                                     j_array = []
-                                    for data in dataset:
+                                    for _ in dataset:
                                         j = {
-                                            "instruction": data['instruction'],
-                                            "input": data['input'],
-                                            "output": data['output']
+                                            "instruction": _['instruction'],
+                                            "input": _['input'],
+                                            "output": _['output']
                                         }
                                         j_array.append(j)
                                     json.dump(j_array, f, indent=4)
-                                    raft_index += 1
+                                    backup_filepath = os.path.join(prev_ver_dir, f'{backup_checkpoint}_{file}')
+                                    with open(backup_filepath, 'w') as backup_file:
+                                        json.dump(data, backup_file, indent=4)
+                                    webpage_file.seek(0)  # Move pointer to the start of the file
+                                    webpage_file.truncate()  # Clear file contents
+                                    json.dump(data, webpage_file, indent=4)
+                                    print(f"Updated file: {filepath}")
                         except Exception as e:
                             print(f"Error processing item {item['url']}: {e}")
                             print(f"Error on line: {e.__traceback__.tb_lineno}")
                             continue
-                    # Update the file if there were any changes
-                    if updated:
-                        # Backup the previous version
-                        backup_filepath = os.path.join(prev_ver_dir, f'_{datetime.now().timestamp()}_{file}')
-                        with open(backup_filepath, 'w') as backup_file:
-                            json.dump(data, backup_file, indent=4)
-                        webpage_file.seek(0)  # Move pointer to the start of the file
-                        webpage_file.truncate()  # Clear file contents
-                        json.dump(data, webpage_file, indent=4)
-                        print(f"Updated file: {filepath}")
-
-
                 except Exception as e:
                     print(f"Error loading file {filepath}: {e}")
                     # line no of error
                     print(f"Error on line: {e.__traceback__.tb_lineno}")
                     continue
-
 
 
 if __name__ == "__main__":
