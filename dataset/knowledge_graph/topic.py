@@ -68,7 +68,6 @@ def generate_topic(text: str) -> list[dict]:
                 # remove unnecessary spaces
                 topics = re.sub(r"\s+", " ", topics)
                 try:
-                    print(topics)
                     topics = json.loads(topics)
                 except Exception as e:
                     if "Expecting ',' delimiter" in str(e):

@@ -178,3 +178,5 @@ temp*.txt
 raft*.json
 *extracted_text*
 dataset/raw_dataset/pdf_texts
+dataset/raw_dataset/pdf2jsondata*
+dataset/generated_dataset*

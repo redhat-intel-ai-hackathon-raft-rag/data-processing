@@ -30,6 +30,11 @@ openaiclient = OpenAI(
 
 cohereclient = cohere.ClientV2(os.getenv("COHERE_API_KEY"))
 
+qwen_client = OpenAI(
+    base_url=os.getenv("RUNPOD_BASE_URL"),
+    api_key=os.getenv("RUNPOD_API_KEY")
+)
+
 
 def embedding_pipeline(texts: list[str], task_type: TaskType):
     inputs = [TextEmbeddingInput(text, task_type) for text in texts]
@@ -40,83 +45,69 @@ def text_generation_pipeline(messages):
     is_response_generated = False
     while not is_response_generated:
         try:
+            print("Trying with Gemini")
             response = geminiclient.chat.completions.create(
                 model="google/gemini-1.5-flash-002",
                 messages=messages,
                 stream=False
             )
             is_response_generated = True
-        except Exception as e:
-            if "invalid" in str(e).lower():
-                refresh_client()
-                try:
-                    response = geminiclient.chat.completions.create(
-                        model="google/gemini-1.5-flash-002",
-                        messages=messages,
-                        stream=False
+        except Exception:
+            try:
+                qwen_message = []
+                for message in messages:
+                    if 'context' in message:
+                        qwen_message.append({
+                            "role": message["role"],
+                            "content": message["content"] +
+                                        "\n" +
+                                        "#Context: " +
+                                        message["context"]
+                        })
+                    else:
+                        qwen_message.append(message)
+                print("Trying with Qwen")
+                response = qwen_client.chat.completions.create(
+                        model="Qwen/Qwen2.5-1.5B-Instruct",
+                        messages=qwen_message
                     )
+                is_response_generated = True
+            except Exception as e:
+                print(e)
+                cohere_message = []
+                for message in messages:
+                    if 'context' in message:
+                        cohere_message.append({
+                            "role": message["role"],
+                            "content": message["content"] +
+                                        "\n" +
+                                        "#Context: " +
+                                        message["context"]
+                        })
+                    else:
+                        cohere_message.append(message)
+                    print("Retrying with Cohere")
+                try:
+                    response = cohereclient.chat(
+                        model="command-r-08-2024",
+                        messages=cohere_message
+                    )
+                    print(response)
                     is_response_generated = True
-                except Exception:
+                except Exception as e:
+                    print(e)
                     try:
+                        print("Retrying with OpenAI")
                         response = openaiclient.chat.completions.create(
                             model="gpt-4o-mini",
                             messages=messages,
                             stream=False
                         )
-                        is_response_generated = True
-                    except Exception:
-                        cohere_message = []
-                        for message in messages:
-                            if 'context' in message:
-                                cohere_message.append({
-                                    "role": message["role"],
-                                    "content": message["content"] +
-                                                "\n" +
-                                                "Context: " +
-                                                message["context"]
-                                })
-                            else:
-                                cohere_message.append(message)
-                        try:
-                            response = cohereclient.chat(
-                                model="command-r-08-2024",
-                                messages=cohere_message
-                            )
-                            is_response_generated = True
-                        except Exception:
-                            continue
-            elif "RESOURCE_EXHAUSTED" in str(e):
-                try:
-                    response = openaiclient.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages=messages,
-                        stream=False
-                    )
-                    is_response_generated = True
-                except Exception:
-                    cohere_message = []
-                    for message in messages:
-                        if 'context' in message:
-                            cohere_message.append({
-                                "role": message["role"],
-                                "content": message["content"] +
-                                            "\n" +
-                                            "Context: " +
-                                            message["context"]
-                            })
-                        else:
-                            cohere_message.append(message)
-                    try:
-                        response = cohereclient.chat(
-                            model="command-r-08-2024",
-                            messages=cohere_message
-                        )
+                        print(response)
                         is_response_generated = True
                     except Exception:
                         continue
-            else:
-                raise e
-        random_num = random.randint(5, 60)
+        random_num = random.randint(1, 5)
         time.sleep(random_num)
     return response
 

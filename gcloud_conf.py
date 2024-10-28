@@ -39,6 +39,7 @@ class TaskType:
 
 def refresh_client():
     global geminiclient
+    global credentials
     credentials.refresh(auth_request)
     geminiclient = openai.OpenAI(
         base_url=f"https://{location}-aiplatform.googleapis.com/v1beta1/projects/{PROJECT_ID}/locations/{location}/endpoints/openapi",

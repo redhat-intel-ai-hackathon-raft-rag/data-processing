@@ -1,12 +1,15 @@
 import random
 from typing import List
+
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from dataset.raft.distructors_generator import distructors_generator
 from dataset.raft.generate_question_answer_set import generate_question_answer_set
-from llmmodel import text_splitter, percentile_chunker, gradient_chunker
-    
+from llmmodel import percentile_chunker
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=7500, chunk_overlap=750)
+
 
 def chunks_to_dataset(chunks: str, distuctor_only_dataset_ratio=0.2) -> List[dict]:
-    if len(chunks) > 10000:
+    if len(chunks) > 7500:
         try:
             chunks = text_splitter.split_text(chunks)
         except Exception:
@@ -19,7 +22,7 @@ def chunks_to_dataset(chunks: str, distuctor_only_dataset_ratio=0.2) -> List[dic
     dataset = []
     print(f"Number of chunks: {num_chunks}")
     for chunk in chunks:
-        if len(chunk) > 10000:
+        if len(chunk) > 7500:
             print(f"Chunk too long: {len(chunk)}")
             parts = percentile_chunker.split_text(chunk)
             for part in parts:
@@ -28,22 +31,22 @@ def chunks_to_dataset(chunks: str, distuctor_only_dataset_ratio=0.2) -> List[dic
                     dice = random.randint(0, 1)
                     if dice > distuctor_only_dataset_ratio and num_chunks > 1:
                         d = {
-                            "instruction": j["question"],
-                            "input": "\n".join(str(d) for d in distructors_generator(chunks, idx, num_distructors=3)) + "\n" + part,
+                            "input": j["question"],
+                            "instruction": "\n".join(str(d) for d in distructors_generator(chunks, idx, num_distructors=3)) + "\n" + part,
                             "oracle_input": part,
                             "output": j["answer"]
                         }
                     elif dice <= distuctor_only_dataset_ratio and num_chunks > 1:
                         d = {
-                            "instruction": j["question"],
-                            "input": "\n".join(str(d) for d in distructors_generator(chunks, idx, num_distructors=3)),
+                            "input": j["question"],
+                            "instruction": "\n".join(str(d) for d in distructors_generator(chunks, idx, num_distructors=3)),
                             "oracle_input": part,
                             "output": j["answer"]
                         }
                     else:
                         d = {
-                            "instruction": j["question"],
-                            "input": part,
+                            "input": j["question"],
+                            "instruction": part,
                             "oracle_input": part,
                             "output": j["answer"]
                         }
@@ -54,22 +57,22 @@ def chunks_to_dataset(chunks: str, distuctor_only_dataset_ratio=0.2) -> List[dic
             dice = random.randint(0, 1)
             if dice > distuctor_only_dataset_ratio and num_chunks > 1:
                 d = {
-                    "instruction": j["question"],
-                    "input": "\n".join(str(d) for d in distructors_generator(chunks, idx, num_distructors=3)) + "\n" + chunk,
+                    "input": j["question"],
+                    "instruction": "\n".join(str(d) for d in distructors_generator(chunks, idx, num_distructors=3)) + "\n" + chunk,
                     "oracle_input": chunk,
                     "output": j["answer"]
                 }
             elif dice <= distuctor_only_dataset_ratio and num_chunks > 1:
                 d = {
-                    "instruction": j["question"],
-                    "input": "\n".join(str(d) for d in distructors_generator(chunks, idx, num_distructors=3)),
+                    "input": j["question"],
+                    "instruction": "\n".join(str(d) for d in distructors_generator(chunks, idx, num_distructors=3)),
                     "oracle_input": chunk,
                     "output": j["answer"]
                 }
             else:
                 d = {
-                    "instruction": j["question"],
-                    "input": chunk,
+                    "input": j["question"],
+                    "instruction": chunk,
                     "oracle_input": chunk,
                     "output": j["answer"]
                 }

@@ -43,7 +43,6 @@ def generate_question_answer_set(chunk: str):
                 # cohere
                 questions = questions.message.content[0].text.split("\n")
                 print("cohere generated questions")
-        print(questions)
         for question in questions:
             question = question.replace("Generate questions based on the following text:", "")
             if question == "" or question == " ":
