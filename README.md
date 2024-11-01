@@ -18,20 +18,13 @@ RAG for generating answer
 
 ## Components
 
-1. Docs
-
-- requirement.txt
-- spec.txt
-- authors.txt
-- branches.txt
-
-2. Dataset(RAFT)
+1. Dataset(RAFT)
 
 - raw_dataset
 - raft
 - generated_dataset
 
-3. Training
+2. Training
 
 - recipe
 - training_script
@@ -39,23 +32,17 @@ RAG for generating answer
 - finetuned-model
 - openvivo
 
-4. Inference(RAG)
+3. Inference(RAG)
 
 - rag
 - retrieval_optimization
 - serve
 
-5. Benchmarking
+4. Infra
 
-- efficinecy_raft
-- efficiency_rag
-- effectiveness_model
+- deploy
 
-6. Infra
-
-- deploy.sh
-
-7. Deliverables
+5. Deliverables
 
 - demo_video
 - test_run_all
