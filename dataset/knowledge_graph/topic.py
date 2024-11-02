@@ -130,7 +130,7 @@ def handle_large_text(text: str):
 
 if __name__ == "__main__":
     while True:
-        for root, dirs, files in os.walk("dataset/raw_dataset/scraper/"):
+        for root, dirs, files in os.walk("dataset/raw_dataset/dataset_web/"):
             for file in files:
                 if file.endswith(".json"):
                     print(os.path.join(root, file))

@@ -132,9 +132,9 @@ def process_webpages(webpages_dir, prev_ver_dir, raft_generated_dir, temp_file):
 
 
 if __name__ == "__main__":
-    webpages_dir = 'dataset/raw_dataset/scraper/'
-    prev_ver_dir = 'dataset/raw_dataset/old_scraper/'
-    raft_generated_dir = 'dataset/generated_dataset/'
+    webpages_dir = 'dataset/raw_dataset/dataset_web/'
+    prev_ver_dir = 'dataset/raw_dataset/old_dataset_web/'
+    raft_generated_dir = 'dataset/train_dataset_web/'
     random_num = random.randint(0, 1000000)
     print(f"Random number: {random_num}")
     temp_file = str(f"temp/temp_{random_num}.txt")

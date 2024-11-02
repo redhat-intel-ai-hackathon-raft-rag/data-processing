@@ -273,22 +273,22 @@ def extract_references(text):
 
 
 if __name__ == '__main__':
-    pdf_texts_dir = 'dataset/raw_dataset/pdf_texts'
-    pdf_texts_files = os.listdir(pdf_texts_dir)
-    random.shuffle(pdf_texts_files)
-    os.makedirs('dataset/raw_dataset/pdf2jsondata', exist_ok=True)
-    for pdf_text_file in pdf_texts_files:
+    dataset_book_texts_dir = 'dataset/raw_dataset/dataset_book_texts'
+    dataset_book_texts_files = os.listdir(dataset_book_texts_dir)
+    random.shuffle(dataset_book_texts_files)
+    os.makedirs('dataset/raw_dataset/dataset_book', exist_ok=True)
+    for pdf_text_file in dataset_book_texts_files:
         try:
             text = ""
-            with open(os.path.join(pdf_texts_dir, pdf_text_file), 'r', encoding='utf-8') as f:
+            with open(os.path.join(dataset_book_texts_dir, pdf_text_file), 'r', encoding='utf-8') as f:
                 text = f.read()
             text_json = text_to_json(text)
             title = pdf_text_file.split(".json")[0]
             if text_json["title_and_authors"].get("titles", None) is not None:
                 title = text_json["title_and_authors"]["titles"]
-            with open(f'dataset/raw_dataset/pdf2jsondata/{title}.json', 'w', encoding='utf-8') as f:
+            with open(f'dataset/raw_dataset/dataset_book/{title}.json', 'w', encoding='utf-8') as f:
                 json.dump(text_json, f, ensure_ascii=False, indent=4)
-                os.remove(os.path.join(pdf_texts_dir, pdf_text_file))
+                os.remove(os.path.join(dataset_book_texts_dir, pdf_text_file))
         except Exception as e:
             print(f"Error in {pdf_text_file}: {e}")
             print(f"Error in Line: {e.__traceback__.tb_lineno}")

@@ -6,7 +6,7 @@ from llmmodel import text_generation_pipeline
 def get_medical_topics():
     medical_topics = []
     start_urls = []
-    for root, dirs, files in os.walk("dataset/raw_dataset/scraper/"):
+    for root, dirs, files in os.walk("dataset/raw_dataset/dataset_web/"):
         for file in files:
             if file.endswith(".json"):
                 print(os.path.join(root, file))
@@ -71,7 +71,7 @@ def get_medical_topics():
 
 if __name__ == "__main__":
     print(get_medical_topics())
-    # with open("dataset/raw_dataset/scraper/extracted_text_20241021_105748.json", "r+") as f:
+    # with open("dataset/raw_dataset/dataset_web/extracted_text_20241021_105748.json", "r+") as f:
     #     json_data = json.load(f)
     #     fixed_data = []
     #     for item in json_data:

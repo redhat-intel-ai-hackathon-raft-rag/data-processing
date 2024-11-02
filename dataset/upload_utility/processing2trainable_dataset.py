@@ -19,7 +19,7 @@ def process_json_files(raft_dir):
                 for entry in raft:
                     if "oracle_input" in entry.keys():
                         entry = entry.pop("oracle_input")
-                with open("dataset/generated_dataset_book/" + file, "w") as f:
+                with open("dataset/train_dataset_book/" + file, "w") as f:
                     json.dump(data['raft'], f, indent=4)
                 # raft_file.seek(0)
                 # raft_file.truncate()
@@ -27,5 +27,5 @@ def process_json_files(raft_dir):
 
 
 if __name__ == "__main__":
-    raft_dir = "dataset/raw_dataset/pdf2jsondata"
+    raft_dir = "dataset/raw_dataset/dataset_book"
     process_json_files(raft_dir)
