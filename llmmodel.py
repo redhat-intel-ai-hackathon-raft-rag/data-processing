@@ -41,17 +41,31 @@ def embedding_pipeline(texts: list[str], task_type: TaskType):
     return embedding_model.get_embeddings(inputs)
 
 
+gemini_limit = 0
+interval = 60 # 1 minute
+current_time = time.time()
+
+
 def text_generation_pipeline(messages):
+    global gemini_limit
+    global current_time
+    if time.time() - current_time > interval:
+        gemini_limit = 0
+        current_time = time.time()
     is_response_generated = False
     while not is_response_generated:
         try:
+            if gemini_limit > 100:
+                raise Exception("Gemini limit exceeded")
             print("Trying with Gemini")
             response = geminiclient.chat.completions.create(
                 model="google/gemini-1.5-flash-002",
                 messages=messages,
                 stream=False
             )
+            print(response)
             is_response_generated = True
+            gemini_limit += 1
         except Exception:
             try:
                 qwen_message = []

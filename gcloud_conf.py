@@ -1,30 +1,43 @@
 import os
-from dotenv import load_dotenv
-import vertexai
-import openai
-from google.auth import transport
-from google.oauth2 import service_account
 from vertexai.language_models import TextEmbeddingModel
+from typing import Any
 
+import google.auth
+import google.auth.transport.requests
+import openai
+from dotenv import load_dotenv
 
 load_dotenv()
-PROJECT_ID = "polar-ring-439102-e9"
-# location = "us-central1"
-location = "asia-northeast1"
+PROJECT_ID = os.getenv("GCLOUD_PROJECT_ID")
+location = os.getenv("GCLOUD_LOCATION", "us-central1")
 MODEL_ID = "text-embedding-004"
-credentials = service_account.Credentials.from_service_account_file(
-    os.getenv("GCLOUD_SERVICE_ACCOUNT_KEY_PATH"),
-    scopes=["https://www.googleapis.com/auth/cloud-platform"],
-)
-vertexai.init(project=PROJECT_ID, location=location)
-auth_request = transport.requests.Request()
-credentials.refresh(auth_request)
-geminiclient = openai.OpenAI(
-    base_url=f"https://{location}-aiplatform.googleapis.com/v1beta1/projects/ \
-        {PROJECT_ID}/locations/{location}/endpoints/openapi",
-    api_key=credentials.token,
-)
 embedding_model = TextEmbeddingModel.from_pretrained(MODEL_ID)
+# vertexai.init(project=PROJECT_ID, location=location)
+
+
+class OpenAICredentialsRefresher:
+    def __init__(self, **kwargs: Any) -> None:
+        # Set a dummy key here
+        self.client = openai.OpenAI(**kwargs, api_key="DUMMY")
+        self.creds, self.project = google.auth.default(
+            scopes=["https://www.googleapis.com/auth/cloud-platform"]
+        )
+
+    def __getattr__(self, name: str) -> Any:
+        if not self.creds.valid:
+            auth_req = google.auth.transport.requests.Request()
+            self.creds.refresh(auth_req)
+
+            if not self.creds.valid:
+                raise RuntimeError("Unable to refresh auth")
+
+            self.client.api_key = self.creds.token
+        return getattr(self.client, name)
+
+
+geminiclient = OpenAICredentialsRefresher(
+    base_url=f"https://{location}-aiplatform.googleapis.com/v1beta1/projects/{PROJECT_ID}/locations/{location}/endpoints/openapi",
+)
 
 
 class TaskType:
@@ -38,12 +51,8 @@ class TaskType:
     CODE_RETRIEVAL_QUERY = "CODE_RETRIEVAL_QUERY"
 
 
-def refresh_client():
-    global geminiclient
-    global credentials
-    credentials.refresh(auth_request)
-    geminiclient = openai.OpenAI(
-        base_url=f"https://{location}-aiplatform.googleapis.com/v1beta1/ \
-            projects/{PROJECT_ID}/locations/{location}/endpoints/openapi",
-        api_key=credentials.token,
-    )
+if __name__ == "__main__":
+    print(geminiclient.chat.completions.create(
+        model="google/gemini-1.5-flash-002",
+        messages=[{"role": "user", "content": "Why is the sky blue?"}],
+    ).choices[0].message.content)

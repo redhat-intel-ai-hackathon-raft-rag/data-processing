@@ -51,38 +51,38 @@ def process_webpages(webpages_dir, prev_ver_dir, raft_generated_dir, temp_file):
 
                             # 2. check topics
                             ## 2.1 add topics if not exists
-                            if "topics" not in item:
-                                try:
-                                    if len(item['text']) > 10000:
-                                        temp_topics = []
-                                        texts = text_splitter.split_text(item['text'])
-                                        for text in texts:
-                                            temp_topics.extend(generate_topic(text))
-                                        item['topics'] = temp_topics
-                                    else:
-                                        item['topics'] = generate_topic(item['text'])
-                                    backup_filepath = os.path.join(prev_ver_dir, f'{backup_checkpoint}_{file}')
-                                    with open(backup_filepath, 'w') as backup_file:
-                                        json.dump(data, backup_file, indent=4)
-                                    webpage_file.seek(0)  # Move pointer to the start of the file
-                                    webpage_file.truncate()  # Clear file contents
-                                    json.dump(data, webpage_file, indent=4)
-                                    print(f"Updated file: {filepath}")
-                                except Exception as e:
-                                    print(f"Error generating topics for {item['url']}: {e}")
+                            # if "topics" not in item:
+                            #     try:
+                            #         if len(item['text']) > 10000:
+                            #             temp_topics = []
+                            #             texts = text_splitter.split_text(item['text'])
+                            #             for text in texts:
+                            #                 temp_topics.extend(generate_topic(text))
+                            #             item['topics'] = temp_topics
+                            #         else:
+                            #             item['topics'] = generate_topic(item['text'])
+                            #         backup_filepath = os.path.join(prev_ver_dir, f'{backup_checkpoint}_{file}')
+                            #         with open(backup_filepath, 'w') as backup_file:
+                            #             json.dump(data, backup_file, indent=4)
+                            #         webpage_file.seek(0)  # Move pointer to the start of the file
+                            #         webpage_file.truncate()  # Clear file contents
+                            #         json.dump(data, webpage_file, indent=4)
+                            #         print(f"Updated file: {filepath}")
+                            #     except Exception as e:
+                            #         print(f"Error generating topics for {item['url']}: {e}")
 
                             ## 2.2 remove topic where score < 0.5
-                            if "topics" in item and item['topics']:
-                                if any(topic.get('score', 0) < 0.5 for topic in item['topics']):
-                                    item['topics'] = [topic for topic in item['topics'] if topic.get('score', 0) >= 0.5]
-                                    print(f"Updated topics for {item['url']} (Removed low-scoring topics)")
-                                    backup_filepath = os.path.join(prev_ver_dir, f'{backup_checkpoint}_{file}')
-                                    with open(backup_filepath, 'w') as backup_file:
-                                        json.dump(data, backup_file, indent=4)
-                                    webpage_file.seek(0)  # Move pointer to the start of the file
-                                    webpage_file.truncate()  # Clear file contents
-                                    json.dump(data, webpage_file, indent=4)
-                                    print(f"Updated file: {filepath}")
+                            # if "topics" in item and item['topics']:
+                            #     if any(topic.get('score', 0) < 0.5 for topic in item['topics']):
+                            #         item['topics'] = [topic for topic in item['topics'] if topic.get('score', 0) >= 0.5]
+                            #         print(f"Updated topics for {item['url']} (Removed low-scoring topics)")
+                            #         backup_filepath = os.path.join(prev_ver_dir, f'{backup_checkpoint}_{file}')
+                            #         with open(backup_filepath, 'w') as backup_file:
+                            #             json.dump(data, backup_file, indent=4)
+                            #         webpage_file.seek(0)  # Move pointer to the start of the file
+                            #         webpage_file.truncate()  # Clear file contents
+                            #         json.dump(data, webpage_file, indent=4)
+                            #         print(f"Updated file: {filepath}")
 
                             # ## 2.3 remove item where topics: None or []
                             # if not item.get('topics'):
@@ -102,24 +102,14 @@ def process_webpages(webpages_dir, prev_ver_dir, raft_generated_dir, temp_file):
                                 dataset = chunks_to_dataset(item['text'])
                                 item['raft'] = dataset
                                 print(f"Added raft for {item['url']}")
-                                raft_generated_file_path = os.path.join(raft_generated_dir, f"raft_{datetime.now().timestamp()}_{file}")
-                                with open(raft_generated_file_path, "w") as f:
-                                    j_array = []
-                                    for _ in dataset:
-                                        j = {
-                                            "instruction": _['instruction'],
-                                            "input": _['input'],
-                                            "output": _['output']
-                                        }
-                                        j_array.append(j)
-                                    json.dump(j_array, f, indent=4)
-                                    backup_filepath = os.path.join(prev_ver_dir, f'{backup_checkpoint}_{file}')
-                                    with open(backup_filepath, 'w') as backup_file:
-                                        json.dump(data, backup_file, indent=4)
-                                    webpage_file.seek(0)  # Move pointer to the start of the file
-                                    webpage_file.truncate()  # Clear file contents
-                                    json.dump(data, webpage_file, indent=4)
-                                    print(f"Updated file: {filepath}")
+                                backup_filepath = os.path.join(prev_ver_dir, f'{backup_checkpoint}_{file}')
+                                os.makedirs(os.path.dirname(backup_filepath), exist_ok=True)
+                                with open(backup_filepath, 'w') as backup_file:
+                                    json.dump(data, backup_file, indent=4)
+                                webpage_file.seek(0)
+                                webpage_file.truncate()
+                                json.dump(data, webpage_file, indent=4)
+                                print(f"Updated file: {filepath}")
                         except Exception as e:
                             print(f"Error processing item {item['url']}: {e}")
                             print(f"Error on line: {e.__traceback__.tb_lineno}")
