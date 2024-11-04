@@ -117,7 +117,7 @@ def generate_topic(text: str) -> list[dict]:
 def handle_large_text(text: str):
     texts = []
     text_length = len(text)
-    if text_length > 100000:
+    if text_length > 10000:
         try:
             chunks = text_splitter.split_text(text)
         except Exception:

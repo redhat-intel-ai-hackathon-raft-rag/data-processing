@@ -1,78 +1,79 @@
-# Overview
+### Web crawl for the web domains
 
-Generative AI and RAG (Retrieval Augmented Generation) applications for https://redhat-intel.devpost.com.
+Researching popular and trustable web sites and their quality of articles.
 
-## Problem
+The factor of trustability:
 
-Solving problem of the specific domain, like knowledge of the organizations or industries, is hard.
+- Review process of the web site
 
-## Solution
+- PageRand or other algorithmically calculated scores
 
-### Training time
+then write the domains within dataset/raw_dataset/spider_dataset_web.py
 
-RAG for generating dataset for fine tuning
+and run
 
-### Inference time
+````bash
+python -m dataset.raw_dataset.spider_dataset_web
+```
 
-RAG for generating answer
+### Generating topics for each articles
 
-## Components
+```bash
+python -m dataset.knowledge_graph.topic
+````
 
-1. Dataset(RAFT)
+### Saving the topics to text file
 
-- raw_dataset
-- raft
-- generated_dataset
+#### Notice: This is an application specific script
 
-2. Training
+```bash
+python -m dataset.knowledge_graph.medical_topic
+```
 
-- recipe
-- training_script
-- model
-- finetuned-model
-- openvivo
+### Collect Thesis or books for the topics
 
-3. Inference(RAG)
+```bash
+python -m dataset.raw_dataset.spider_dataset_book
+```
 
-- rag
-- retrieval_optimization
-- serve
+then
 
-4. Infra
+```bash
+python -m dataset.raw_dataset.pdf2xt
+```
 
-- deploy
+### Generating RAFT dataset
 
-5. Deliverables
+```bash
+python -m dataset.raw_dataset.web_processing
+```
 
-- demo_video
-- test_run_all
-- screen_shot_openvino
-- screen_shot_amx
+```bash
+python -m dataset.raw_dataset.pdftext2json
+```
 
-## Requirement
+### Generating RAFT Dataset for training LLM
 
-### Environment and technology
+```bash
+python -m dataset.upload_utility.processing2trainable_dataset
+```
 
-- Red Hat OpenShift AI environment
+### Upload the datasets
 
-- Intel OpenVINO
+./dataset/upload_utility/upload_dataset_book.sh
 
-- Intel Xeon Processor AMX feature
+./dataset/upload_utility/upload_training_dataset_book.sh
 
-### Deliverables
+./dataset/upload_utility/upload_dataset_web.sh
 
-- Include a demonstration video of the Project made publicly visible on YouTube, Vimeo, Facebook Video, or Youku
+./dataset/upload_utility/upload_training_dataset_web.sh
 
-  Video should be around three minutes
+### Budget
 
-  Video should include footage that shows the Project functioning on the device for which it was built
+For feasible LLM application, at the minimum
 
-- Include at least one test script to demonstrate the Project functionality
+5-50 $ when borrowing budgeted GPU to run vllm
 
-- Include a screenshot capturing the results of the test script showcasing the use of the Intel OpenVINO model server for inference.
+-500$ when using Cohere or ChatGPT
 
-- Include a screenshot showcasing the underlying platform supporting the Intel Xeon Processor AMX feature.
-
-## Legal
-
-Apache-2.0 licensed, refer to the LICENSE file in the top level directory.
+more for other LLM provider's API

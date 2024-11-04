@@ -33,21 +33,21 @@ def chunks_to_dataset(chunks: str, distuctor_only_dataset_ratio=0.2) -> List[dic
                         d = {
                             "input": j["question"],
                             "instruction": "\n".join(str(d) for d in distructors_generator(chunks, idx, num_distructors=3)) + "\n" + part,
-                            "oracle_input": part,
+                            "oracle_context": part,
                             "output": j["answer"]
                         }
                     elif dice <= distuctor_only_dataset_ratio and num_chunks > 1:
                         d = {
                             "input": j["question"],
                             "instruction": "\n".join(str(d) for d in distructors_generator(chunks, idx, num_distructors=3)),
-                            "oracle_input": part,
+                            "oracle_context": part,
                             "output": j["answer"]
                         }
                     else:
                         d = {
                             "input": j["question"],
                             "instruction": part,
-                            "oracle_input": part,
+                            "oracle_context": part,
                             "output": j["answer"]
                         }
                     dataset.append(d)
@@ -59,21 +59,21 @@ def chunks_to_dataset(chunks: str, distuctor_only_dataset_ratio=0.2) -> List[dic
                 d = {
                     "input": j["question"],
                     "instruction": "\n".join(str(d) for d in distructors_generator(chunks, idx, num_distructors=3)) + "\n" + chunk,
-                    "oracle_input": chunk,
+                    "oracle_context": chunk,
                     "output": j["answer"]
                 }
             elif dice <= distuctor_only_dataset_ratio and num_chunks > 1:
                 d = {
                     "input": j["question"],
                     "instruction": "\n".join(str(d) for d in distructors_generator(chunks, idx, num_distructors=3)),
-                    "oracle_input": chunk,
+                    "oracle_context": chunk,
                     "output": j["answer"]
                 }
             else:
                 d = {
                     "input": j["question"],
                     "instruction": chunk,
-                    "oracle_input": chunk,
+                    "oracle_context": chunk,
                     "output": j["answer"]
                 }
             dataset.append(d)
