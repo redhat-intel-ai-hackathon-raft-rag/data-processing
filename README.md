@@ -60,6 +60,7 @@ python -m dataset.upload_utility.processing2trainable_dataset
 
 ### Upload the datasets
 
+```bash
 ./dataset/upload_utility/upload_dataset_book.sh
 
 ./dataset/upload_utility/upload_training_dataset_book.sh
@@ -67,6 +68,7 @@ python -m dataset.upload_utility.processing2trainable_dataset
 ./dataset/upload_utility/upload_dataset_web.sh
 
 ./dataset/upload_utility/upload_training_dataset_web.sh
+```
 
 ### Budget
 
