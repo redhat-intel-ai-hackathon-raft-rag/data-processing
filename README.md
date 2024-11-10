@@ -1,18 +1,18 @@
 ### Web crawl for the web domains
 
-Researching popular and trustable web sites and their quality of articles.
+You need to do research popular and trustable web sites and their quality of articles at first.
 
 The factor of trustability:
 
 - Review process of the web site
 
-- PageRand or other algorithmically calculated scores
+- PageRank or other algorithmically calculated scores
 
 then write the domains within dataset/raw_dataset/spider_dataset_web.py
 
 and run
 
-````bash
+```bash
 python -m dataset.raw_dataset.spider_dataset_web
 ```
 
@@ -20,7 +20,7 @@ python -m dataset.raw_dataset.spider_dataset_web
 
 ```bash
 python -m dataset.knowledge_graph.topic
-````
+```
 
 ### Saving the topics to text file
 
